@@ -30,7 +30,7 @@ interface ReplyNotificationPostback {
     type            : string;
     message         : string;
     replyToken      : string;
-    bgColor         ?: string;
+    bgColor        ?: string;
 }
 interface ReplyNotificationPostbackTemp{
     userId          : number;
@@ -45,6 +45,7 @@ interface ReplyNotificationPostbackfall {
     type                : string;
     message             : string;
     replyToken          : string;
+    bgColor            ?: string;
 }
 interface ReplyNotificationPostbackHeart{
     userId              : number;
@@ -1077,9 +1078,9 @@ export const replyNotification = async ({
                         type: "bubble",
                         styles: {
                             body: {
-                                backgroundcolor: bgColor
+                                backgroundColor: bgColor
                             }
-                        },
+                        },                       
                         body: {
                             type    : "box",
                             layout  : "vertical",
@@ -1165,7 +1166,7 @@ export const replyNotificationPostback = async ({
                         type: "bubble",
                         styles: {
                             body: {
-                                backgroundcolor: bgColor
+                                backgroundColor: bgColor
                             }
                         },
                         body: {
@@ -1269,7 +1270,7 @@ export const replyNotificationPostback = async ({
 
 export const replyNotificationSOS = async ({
     replyToken,
-    message
+    message    
 }: ReplyNotification) => {
     try {
 
@@ -1560,6 +1561,7 @@ export const replyNotificationPostbackfall = async ({
     type,
     message,
     replyToken,
+    bgColor = "#ffffff"
 
 }: ReplyNotificationPostbackfall ) => {
     try {
@@ -1608,7 +1610,7 @@ export const replyNotificationPostbackfall = async ({
                                     contents:[
                                         {
                                             type      : "span",
-                                            text      : message,
+                                            text      : `${message} (Background color: ${bgColor})`,
                                             color     : "#555555",
                                             size      : "md",
                                             // decoration: "none",
