@@ -24,11 +24,13 @@ export const elderlyRegistrationSchema = z.object({
 
   gender_id: z.number({
     required_error: "กรุณาเลือกเพศ",
-  }),
+    invalid_type_error: "กรุณาเลือกเพศ",
+  }).min(1, "กรุณาเลือกเพศ"),
 
   marry_id: z.number({
     required_error: "กรุณาเลือกสถานะการสมรส",
-  }),
+    invalid_type_error: "กรุณาเลือกสถานะการสมรส",
+  }).min(1, "กรุณาเลือกสถานะการสมรส"),
 
   takecare_number: z.string().optional(),
   takecare_moo: z.string().optional(),
