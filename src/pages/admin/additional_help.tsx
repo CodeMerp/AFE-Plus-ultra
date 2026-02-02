@@ -155,8 +155,8 @@ const AdditionalHelp = () => {
                                 <thead>
                                     <tr>
                                         <th className="px-2">ลำดับ</th>
-                                        <th className="px-2">ชื่อ-สกุล ของผู้ดูแลผู้สูงอายุ</th>
-                                        <th className="px-2">ชื่อ-สกุล ของผู้สูงอายุ</th>
+                                        <th className="px-2">ชื่อ-สกุล ของผู้ดูแลผู้มีภาวะพึ่งพิง</th>
+                                        <th className="px-2">ชื่อ-สกุล ของผู้มีภาวะพึ่งพิง</th>
                                         <th className="px-2">วันที่ขอความช่วยเหลือ</th>
                                         <th className="px-2">วันที่ช่วยเหลือ</th>
                                         <th className="px-2">แบบสอบถาม</th>
@@ -209,11 +209,11 @@ const AdditionalHelp = () => {
                         <Table striped bordered hover>
                             <tbody>
                                 <tr>
-                                    <td className="px-2">{'ชื่อ-สกุล ของผู้ดูแลผู้สูงอายุ'}</td>
+                                    <td className="px-2">{'ชื่อ-สกุล ของผู้ดูแลผู้มีภาวะพึ่งพิง'}</td>
                                     <td className="px-2">{'ตริณภร พิพัฒนกุล'}</td>
                                 </tr>
                                 <tr>
-                                    <td className="px-2">{'ชื่อ-สกุล ของผู้สูงอายุ'}</td>
+                                    <td className="px-2">{'ชื่อ-สกุล ของผู้มีภาวะพึ่งพิง'}</td>
                                     <td className="px-2">{'นิชาภรณ์ สันติสุข'}</td>
                                 </tr>
                                 <tr>
@@ -275,10 +275,10 @@ const AdditionalHelp = () => {
 
                 <Modal show={showQuestionnaire.isShow} onHide={() => handleClose()} size="lg">
                     <Modal.Header closeButton>
-                        <Modal.Title>{'แบบสอบถามการดูแลผู้สูงอายุ'}</Modal.Title>
+                        <Modal.Title>{'แบบสอบถามการดูแลผู้มีภาวะพึ่งพิง'}</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <h5>ตอนที่ 1 ข้อมูลทั่วไปของผู้สูงอายุ</h5>
+                        <h5>ตอนที่ 1 ข้อมูลทั่วไปของผู้มีภาวะพึ่งพิง</h5>
                         <Table striped bordered hover>
                             <tbody>
                                 <tr>
@@ -322,12 +322,12 @@ const AdditionalHelp = () => {
                                     <td className="px-2">{'สะดวกในการเข้าถึง'}</td>
                                 </tr>
                                 <tr>
-                                    <td className="px-2">{'11.การมีผู้ดูแลผู้สูงอายุ'}</td>
+                                    <td className="px-2">{'11.การมีผู้ดูแลผู้มีภาวะพึ่งพิง'}</td>
                                     <td className="px-2">{'มีผู้ดูแล'}</td>
                                 </tr>
                                 <tr>
                                     <td className="px-2">{'12.การเข้าร่วมกิจกรรม'}</td>
-                                    <td className="px-2">{'เป็นสมาชิกชมรมผู้สูงอายุ และเข้าร่วมกิจกรรมไม่  สม่ำเสมอ (น้อยกว่า 8 ครั้งต่อปี)'}</td>
+                                    <td className="px-2">{'เป็นสมาชิกชมรมผู้มีภาวะพึ่งพิง และเข้าร่วมกิจกรรมไม่  สม่ำเสมอ (น้อยกว่า 8 ครั้งต่อปี)'}</td>
                                 </tr>
                             </tbody>
                         </Table>

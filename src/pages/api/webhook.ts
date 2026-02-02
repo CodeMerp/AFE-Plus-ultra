@@ -115,11 +115,11 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 const encodedUsersId = encrypt(responseUser.users_id.toString());
                 console.log("Encoded User ID: ", encodedUsersId);  // เช็คค่า encoded userId
                 const responseUserTakecareperson = await getUserTakecareperson(encodedUsersId);
-                console.log("User Takecareperson Data: ", responseUserTakecareperson);  // เช็คข้อมูลผู้สูงอายุ
+                console.log("User Takecareperson Data: ", responseUserTakecareperson);  // เช็คข้อมูลผู้มีภาวะพึ่งพิง
                 if (responseUserTakecareperson) {
                   await replyConnection({ replyToken, userData: responseUser, userTakecarepersonData: responseUserTakecareperson });
                 } else {
-                  await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถเชื่อมต่อนาฬิกาได้' });
+                  await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้มีภาวะพึ่งพิงไม่สามารถเชื่อมต่อนาฬิกาได้' });
                 }
               } else {
                 await replyNotRegistration({ replyToken, userId });
@@ -130,7 +130,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
               if (responseUser) {
                 const encodedUsersId = encrypt(responseUser.users_id.toString());
                 const responseUserTakecareperson = await getUserTakecareperson(encodedUsersId);
-                console.log("User Takecareperson Data: ", responseUserTakecareperson);  // เช็คข้อมูลผู้สูงอายุ
+                console.log("User Takecareperson Data: ", responseUserTakecareperson);  // เช็คข้อมูลผู้มีภาวะพึ่งพิง
                 if (responseUserTakecareperson) {
                   const responeSafezone = await getSafezone(responseUserTakecareperson.takecare_id, responseUser.users_id);
                   console.log("Safezone Data: ", responeSafezone);  // เช็คข้อมูลเขตปลอดภัย
@@ -142,7 +142,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                     await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้ตั้งค่าเขตปลอดภัยไม่สามารถดูตำแหน่งปัจจุบันได้' });
                   }
                 } else {
-                  await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถดูตำแหน่งปัจจุบันได้' });
+                  await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้มีภาวะพึ่งพิงไม่สามารถดูตำแหน่งปัจจุบันได้' });
                 }
               } else {
                 await replyNotRegistration({ replyToken, userId });
@@ -153,13 +153,13 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
               if (responseUser) {
                 const encodedUsersId = encrypt(responseUser.users_id.toString());
                 const responseUserTakecareperson = await getUserTakecareperson(encodedUsersId);
-                console.log("User Takecareperson Data: ", responseUserTakecareperson);  // เช็คข้อมูลผู้สูงอายุ
+                console.log("User Takecareperson Data: ", responseUserTakecareperson);  // เช็คข้อมูลผู้มีภาวะพึ่งพิง
                 if (responseUserTakecareperson) {
                   const responeSafezone = await getSafezone(responseUserTakecareperson.takecare_id, responseUser.users_id);
                   console.log("Safezone Data: ", responeSafezone);  // เช็คข้อมูลเขตปลอดภัย
                   await replySetting({ replyToken, userData: responseUser, userTakecarepersonData: responseUserTakecareperson, safezoneData: responeSafezone });
                 } else {
-                  await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถตั้งค่าเขตปลอดภัยได้' });
+                  await replyMessage({ replyToken: req.body.events[0].replyToken, message: 'ยังไม่ได้เพิ่มข้อมูลผู้มีภาวะพึ่งพิงไม่สามารถตั้งค่าเขตปลอดภัยได้' });
                 }
               } else {
                 await replyNotRegistration({ replyToken, userId });
@@ -170,7 +170,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
               if (responseUser) {
                 const encodedUsersId = encrypt(responseUser.users_id.toString());
                 const responseUserTakecareperson = await getUserTakecareperson(encodedUsersId);
-                console.log("User Takecareperson Data: ", responseUserTakecareperson);  // เช็คข้อมูลผู้สูงอายุ
+                console.log("User Takecareperson Data: ", responseUserTakecareperson);  // เช็คข้อมูลผู้มีภาวะพึ่งพิง
                 await replyUserInfo({ replyToken, userData: responseUser, userTakecarepersonData: responseUserTakecareperson });
               } else {
                 await replyNotRegistration({ replyToken, userId });

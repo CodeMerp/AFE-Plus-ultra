@@ -1,6 +1,6 @@
 export const metadata = {
   title: 'DemoAssist',
-  description: 'Eldercare Companion สำหรับการดูแลผู้สูงอายุที่เชื่อมต่อกับสมาร์ทวอทของเรา',
+  description: 'Eldercare Companion สำหรับการดูแลผู้มีภาวะพึ่งพิงที่เชื่อมต่อกับสมาร์ทวอทของเรา',
 }
 
 export default function RootLayout({

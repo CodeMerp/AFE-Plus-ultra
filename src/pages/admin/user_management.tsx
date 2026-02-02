@@ -143,7 +143,7 @@ const UserManagement = () => {
                                 ref={setStatus}
                             >
                                 <option value={''}>{'เลือกสถานะ'}</option>
-                                <option value={1}>{'ผู้ดูแลผู้สูงอายุ'}</option>
+                                <option value={1}>{'ผู้ดูแลผู้มีภาวะพึ่งพิง'}</option>
                                 <option value={2}>{'เจ้าหน้าที่ อบต.'}</option>
                             </Form.Select>
 

@@ -227,7 +227,7 @@ const Location = () => {
                                     scaledSize: new window.google.maps.Size(35, 35)
                                 }}
                                 onClick={() => {
-                                    handleMarkerClick(1, destination.lat, destination.lng, 'ผู้สูงอายุ');
+                                    handleMarkerClick(1, destination.lat, destination.lng, 'ผู้มีภาวะพึ่งพิง');
                                 }}
                             >
                                 {infoWindowData.show && (
@@ -265,7 +265,7 @@ const Location = () => {
                         </GoogleMap>
                         <div className={styles.buttonLayout}>
                             {dataUser.takecareData?.takecare_tel1 && (
-                                <a className={`btn btn-primary ${styles.button}`} href={`tel:${dataUser.takecareData?.takecare_tel1}`}> โทรหาผู้สูงอายุ <i className="fas fa-phone"></i> </a>)}
+                                <a className={`btn btn-primary ${styles.button}`} href={`tel:${dataUser.takecareData?.takecare_tel1}`}> โทรหาผู้มีภาวะพึ่งพิง <i className="fas fa-phone"></i> </a>)}
                         </div>
 
                     </>

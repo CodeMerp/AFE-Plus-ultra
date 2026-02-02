@@ -126,8 +126,8 @@ export const replyNotification = async ({
                 messages: [
                     {
                         type: 'location',
-                        title: `ตำแหน่งปัจจุบันของผู้สูงอายุ ${resTakecareperson.takecare_fname} ${resTakecareperson.takecare_sname}`,
-                        address: 'สถานที่ตั้งปัจจุบันของผู้สูงอายุ',
+                        title: `ตำแหน่งปัจจุบันของผู้มีภาวะพึ่งพิง ${resTakecareperson.takecare_fname} ${resTakecareperson.takecare_sname}`,
+                        address: 'สถานที่ตั้งปัจจุบันของผู้มีภาวะพึ่งพิง',
                         latitude: latitude,
                         longitude: longitude,
                     },
@@ -166,7 +166,7 @@ export const replyNotification = async ({
                                     },
                                     {
                                         type: 'text',
-                                        text: 'ข้อมูลผู้สูงอายุ',
+                                        text: 'ข้อมูลผู้มีภาวะพึ่งพิง',
                                         size: 'md',
                                         color: '#555555',
                                         wrap: true,

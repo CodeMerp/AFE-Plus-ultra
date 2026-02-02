@@ -268,7 +268,7 @@ export default async function handle(
                                         replyToken:
                                             req.body.events[0].replyToken,
                                         message:
-                                            "ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถเชื่อมต่อนาฬิกาได้",
+                                            "ยังไม่ได้เพิ่มข้อมูลผู้มีภาวะพึ่งพิงไม่สามารถเชื่อมต่อนาฬิกาได้",
                                     });
                                 }
                             } else {
@@ -336,7 +336,7 @@ export default async function handle(
                                         replyToken:
                                             req.body.events[0].replyToken,
                                         message:
-                                            "ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถดูตำแหน่งปัจจุบันได้",
+                                            "ยังไม่ได้เพิ่มข้อมูลผู้มีภาวะพึ่งพิงไม่สามารถดูตำแหน่งปัจจุบันได้",
                                     });
                                 }
                             } else {
@@ -393,7 +393,7 @@ export default async function handle(
                                         replyToken:
                                             req.body.events[0].replyToken,
                                         message:
-                                            "ยังไม่ได้เพิ่มข้อมูลผู้สูงอายุไม่สามารถตั้งค่าเขตปลอดภัยได้",
+                                            "ยังไม่ได้เพิ่มข้อมูลผู้มีภาวะพึ่งพิงไม่สามารถตั้งค่าเขตปลอดภัยได้",
                                     });
                                 }
                             } else {

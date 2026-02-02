@@ -78,12 +78,12 @@ const SendQuestionnaire = () => {
                         <Card.Body>
                             <Form onSubmit={(e) => handleSubmit(e)} noValidate validated={validated} className="row p-2">
                                 <Form.Group className="col">
-                                    <Form.Label>ชื่อ-สกุล ของผู้ดูแลผู้สูงอายุ</Form.Label>
-                                    <Form.Control type="text" name="name_user" placeholder="ชื่อ-สกุล ของผู้ดูแลผู้สูงอายุ" />
+                                    <Form.Label>ชื่อ-สกุล ของผู้ดูแลผู้มีภาวะพึ่งพิง</Form.Label>
+                                    <Form.Control type="text" name="name_user" placeholder="ชื่อ-สกุล ของผู้ดูแลผู้มีภาวะพึ่งพิง" />
                                 </Form.Group>
                                 <Form.Group className="col">
-                                    <Form.Label>ชื่อ-สกุล ของผู้สูงอายุ </Form.Label>
-                                    <Form.Control type="text" name="name_borrow" placeholder="ชื่อ-สกุล ของผู้สูงอายุ" />
+                                    <Form.Label>ชื่อ-สกุล ของผู้มีภาวะพึ่งพิง </Form.Label>
+                                    <Form.Control type="text" name="name_borrow" placeholder="ชื่อ-สกุล ของผู้มีภาวะพึ่งพิง" />
                                 </Form.Group>
                                 
                                 <Form.Group className="col d-flex align-items-end">
@@ -105,8 +105,8 @@ const SendQuestionnaire = () => {
                                 <thead>
                                     <tr>
                                         <th className="px-2">ลำดับ</th>
-                                        <th className="px-2">ชื่อ-สกุล ของผู้ดูแลผู้สูงอายุ</th>
-                                        <th className="px-2">ชื่อ-สกุล ของผู้สูงอายุ</th>
+                                        <th className="px-2">ชื่อ-สกุล ของผู้ดูแลผู้มีภาวะพึ่งพิง</th>
+                                        <th className="px-2">ชื่อ-สกุล ของผู้มีภาวะพึ่งพิง</th>
                                         <th className="px-2">วันที่ส่งแบบสอบถาม</th>
                                         <th className="px-2">วันที่ตอบกลับ</th>
                                         <th className="px-2">แบบสอบถาม</th>
@@ -153,11 +153,11 @@ const SendQuestionnaire = () => {
                         <Table striped bordered hover>
                             <tbody>
                                 <tr>
-                                    <td className="px-2">{'ชื่อ-สกุล ของผู้ดูแลผู้สูงอายุ'}</td>
+                                    <td className="px-2">{'ชื่อ-สกุล ของผู้ดูแลผู้มีภาวะพึ่งพิง'}</td>
                                     <td className="px-2">{'ตริณภร พิพัฒนกุล'}</td>
                                 </tr>
                                 <tr>
-                                    <td className="px-2">{'ชื่อ-สกุล ของผู้สูงอายุ'}</td>
+                                    <td className="px-2">{'ชื่อ-สกุล ของผู้มีภาวะพึ่งพิง'}</td>
                                     <td className="px-2">{'นิชาภรณ์ สันติสุข'}</td>
                                 </tr>
                                 <tr>
@@ -219,10 +219,10 @@ const SendQuestionnaire = () => {
 
                 <Modal show={showQuestionnaire.isShow} onHide={() => handleClose()} size="lg">
                     <Modal.Header closeButton>
-                        <Modal.Title>{'แบบสอบถามการดูแลผู้สูงอายุ'}</Modal.Title>
+                        <Modal.Title>{'แบบสอบถามการดูแลผู้มีภาวะพึ่งพิง'}</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <h5>ตอนที่ 1 ข้อมูลทั่วไปของผู้สูงอายุ</h5>
+                        <h5>ตอนที่ 1 ข้อมูลทั่วไปของผู้มีภาวะพึ่งพิง</h5>
                         <Table striped bordered hover>
                             <tbody>
                                 <tr>
@@ -266,7 +266,7 @@ const SendQuestionnaire = () => {
                                     <td className="px-2">{'-'}</td>
                                 </tr>
                                 <tr>
-                                    <td className="px-2">{'11.การมีผู้ดูแลผู้สูงอายุ'}</td>
+                                    <td className="px-2">{'11.การมีผู้ดูแลผู้มีภาวะพึ่งพิง'}</td>
                                     <td className="px-2">{'-'}</td>
                                 </tr>
                                 <tr>

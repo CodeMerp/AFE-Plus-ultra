@@ -13,7 +13,7 @@ export const zipCodeRule = z
   .length(5, "รหัสไปรษณีย์ต้องมี 5 หลัก")
   .regex(/^[0-9]+$/, "ต้องเป็นตัวเลขเท่านั้น");
 
-// --- 2. Schema สำหรับแก้ไขข้อมูลผู้สูงอายุ ---
+// --- 2. Schema สำหรับแก้ไขข้อมูลผู้มีภาวะพึ่งพิง ---
 export const puserinfoSchema = z.object({
   takecare_fname: z.string().min(1, "กรุณากรอกชื่อ"),
   takecare_sname: z.string().min(1, "กรุณากรอกนามสกุล"),

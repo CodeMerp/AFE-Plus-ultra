@@ -73,11 +73,11 @@ const Borrow = () => {
                 if (responseUser.data?.data) {
                     setUser(responseUser.data.data);
                     const encodedUsersId = encrypt(responseUser.data?.data.users_id.toString());
-                    // ดึงข้อมูลผู้สูงอายุจากผู้ดูแล
+                    // ดึงข้อมูลผูู้มีภาวะพพึ่งพิงจากผู้ดูแล
                     const responseTakecareperson = await axios.get(`${process.env.WEB_DOMAIN}/api/user/getUserTakecareperson/${encodedUsersId}`);
                     const data = responseTakecareperson.data?.data;
                     if (data) {
-                        setCarePerson(data);  // เก็บข้อมูลผู้สูงอายุที่ดูแล
+                        setCarePerson(data);  // เก็บข้อมูลผู้มีภาวะพึ่งพิงที่ดูแล
                     }
                 } else {
                     setAlert({ show: true, message: 'ไม่สามารถโหลดข้อมูลผู้ใช้ได้' });
@@ -110,7 +110,7 @@ const Borrow = () => {
                 borrow_address: event.currentTarget['borrow_address'].value,
                 borrow_tel: event.currentTarget['borrow_tel'].value,
                 borrow_objective: event.currentTarget['borrow_objective'].value,
-                borrow_name: event.currentTarget['borrow_name'].value, // เก็บชื่อผู้สูงอายุ
+                borrow_name: event.currentTarget['borrow_name'].value, // เก็บชื่อผู้มีภาวะพึ่งพิง
                 borrow_list: listItem.map(item => ({ equipment_id: item.equipment_id }))
             };
 
@@ -154,9 +154,9 @@ const Borrow = () => {
                         />
                     </Form.Group>
 
-                    {/* ชื่อผู้สูงอายุ */}
+                    {/* ชื่อผู้มีภาวะพึ่งพิง */}
                     <Form.Group>
-                        <Form.Label>ชื่อผู้สูงอายุ</Form.Label>
+                        <Form.Label>ชื่อผู้มีภาวะพึ่งพิง</Form.Label>
                         <Form.Control
                             value={carePerson ? `${carePerson.takecare_fname} ${carePerson.takecare_sname}` : ''}
                             disabled
@@ -206,7 +206,7 @@ const Borrow = () => {
     />
 </Form.Group>
 
-{/* เบอร์โทรผู้สูงอายุ */}
+{/* เบอร์โทรผู้มีภาวะพึ่งพิง */}
 <Form.Group>
     <Form.Label>เบอร์โทร</Form.Label>
     <Form.Control
@@ -224,7 +224,7 @@ const Borrow = () => {
                     {/* ที่อยู่และเบอร์โทร */}
                     {/* <TextareaLabel label='ที่อยู่' id="borrow_address" required />
                     <InputLabel label='หมายเลขโทรศัพท์' id="borrow_tel" required /> */}
-                    <InputLabel label='เหตุผล (ระบุลักษณะอาการหรือข้อจำกัดที่ส่งผลต่อการดำเนินชีวิตของผู้สูงอายุ เช่น ภาวะหลงลืม เดินหลงทาง ข้อจำกัดในการดูแลตนเอง หรือเคลื่อนไหวลำบาก)' id="borrow_objective" required />
+                    <InputLabel label='เหตุผล (ระบุลักษณะอาการหรือข้อจำกัดที่ส่งผลต่อการดำเนินชีวิตของผู้มีภาวะพึ่งพิง เช่น ภาวะหลงลืม เดินหลงทาง ข้อจำกัดในการดูแลตนเอง หรือเคลื่อนไหวลำบาก)' id="borrow_objective" required />
                     
                     <p className="m-0">วันเดือนปี (ยื่นคำขอ)</p>
                     <DatePickerX selected={startDate} onChange={setStartDate} />
