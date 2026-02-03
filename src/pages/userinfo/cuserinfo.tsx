@@ -161,13 +161,7 @@ const Cuserinfo = () => {
                 }
             }
             
-            setAlert({
-                show: true,
-                message: 'บันทึกข้อมูลแล้ว',
-                showClose: false,
-                autoCloseMs: 1500,
-                messageClassName: 'fs-3 fw-bold text-center'
-            })
+            // ✅ ลบ setAlert ออกจาก onSubmit (จะย้ายไปแสดงใน onConfirmSubmit แทน)
 
         } catch (error) {
             console.error('Error in handleSubmit:', error);
@@ -175,17 +169,31 @@ const Cuserinfo = () => {
         }
     };
 
-    // ✅ แก้ไข: ปิด popup หลังบันทึกสำเร็จ
+    // ✅ แก้ไข: ปิด popup ยืนยันก่อน แล้วค่อยแสดง success alert
     const onConfirmSubmit = async () => {
         if (!pendingData) return;
         setIsSaving(true);
         try {
             await onSubmit(pendingData);
-            // ✅ ปิด popup หลังบันทึกสำเร็จ
+            // ✅ ปิด popup ยืนยันก่อน
             setConfirmShow(false);
             setPendingData(null);
+            
+            // ✅ หน่วงเวลานิดหนึ่งแล้วค่อยแสดง success alert
+            setTimeout(() => {
+                setAlert({
+                    show: true,
+                    message: 'บันทึกข้อมูลแล้ว',
+                    showClose: false,
+                    autoCloseMs: 1500,
+                    messageClassName: 'fs-3 fw-bold text-center'
+                })
+            }, 300);
         } catch (error) {
             console.error('Error in onConfirmSubmit:', error);
+            // ปิด popup ยืนยันแม้เกิด error
+            setConfirmShow(false);
+            setPendingData(null);
         } finally {
             setIsSaving(false);
         }

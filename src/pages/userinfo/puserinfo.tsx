@@ -172,11 +172,12 @@ const Puserinfo = () => {
     }
 
     const onSubmit = async (formData: PuserinfoFormData) => {
+        if(!dataUser.data){
+            setAlert({ show: true, message: 'ไม่พบข้อมูลผู้มีภาวะพึ่งพิง', showClose: true, autoCloseMs: undefined, messageClassName: undefined })
+            throw new Error('ไม่พบข้อมูลผู้มีภาวะพึ่งพิง');
+        }
+        
         try {
-            if(!dataUser.data){
-                setAlert({ show: true, message: 'ไม่พบข้อมูลผู้มีภาวะพึ่งพิง', showClose: true, autoCloseMs: undefined, messageClassName: undefined })
-                return;
-            }
 
             const data = {
                 takecare_fname   : formData.takecare_fname,
@@ -213,13 +214,7 @@ const Puserinfo = () => {
                 }
             }
             
-            setAlert({
-                show: true,
-                message: 'บันทึกข้อมูลแล้ว',
-                showClose: false,
-                autoCloseMs: 1500,
-                messageClassName: 'fs-3 fw-bold text-center'
-            })
+            // ✅ ลบ setAlert ออกจาก onSubmit (จะย้ายไปแสดงใน onConfirmSubmit แทน)
 
         } catch (error) {
             console.error('Error in handleSubmit:', error);
@@ -227,17 +222,31 @@ const Puserinfo = () => {
         }
     };
 
-    // ✅ แก้ไข: ปิด popup หลังบันทึกสำเร็จ
+    // ✅ แก้ไข: ปิด popup ยืนยันก่อน แล้วค่อยแสดง success alert
     const onConfirmSubmit = async () => {
         if (!pendingData) return;
         setIsSaving(true);
         try {
             await onSubmit(pendingData);
-            // ✅ ปิด popup หลังบันทึกสำเร็จ
+            // ✅ ปิด popup ยืนยันก่อน
             setConfirmShow(false);
             setPendingData(null);
+            
+            // ✅ หน่วงเวลานิดหนึ่งแล้วค่อยแสดง success alert
+            setTimeout(() => {
+                setAlert({
+                    show: true,
+                    message: 'บันทึกข้อมูลแล้ว',
+                    showClose: false,
+                    autoCloseMs: 1500,
+                    messageClassName: 'fs-3 fw-bold text-center'
+                })
+            }, 300);
         } catch (error) {
             console.error('Error in onConfirmSubmit:', error);
+            // ปิด popup ยืนยันแม้เกิด error
+            setConfirmShow(false);
+            setPendingData(null);
         } finally {
             setIsSaving(false);
         }
