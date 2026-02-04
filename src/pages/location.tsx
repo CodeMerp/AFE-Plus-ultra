@@ -260,14 +260,14 @@ const Location = () => {
                                     />
                                 </>
                             </Marker>
-                            {directions && (
-                                <DirectionsRenderer
-                                    directions={directions}
-                                    options={{
-                                        suppressMarkers: true
-                                    }}
-                                />
-                            )}
+                            {/* {directions && (
+  <DirectionsRenderer 
+    directions={directions}
+    options={{
+      suppressMarkers: true
+    }}
+  />
+)} */}
 
                         </GoogleMap>
                         <div className={styles.buttonLayout}>
