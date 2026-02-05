@@ -249,9 +249,8 @@ export const replyNotification = async ({
             console.log('ไม่พบกลุ่มไลน์ที่ต้องการส่งข้อความไป');
         }
     } catch (error: any) {
-  console.log("LINE ERROR", error?.response?.status, error?.response?.data || error.message);
-
-        }
+  console.log("LINE ERROR", error?.response?.status, error?.response?.data,  error?.message);
+}
     };
 
 
