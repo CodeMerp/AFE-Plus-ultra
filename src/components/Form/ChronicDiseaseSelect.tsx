@@ -234,6 +234,14 @@ const ChronicDiseaseSelect: React.FC<ChronicDiseaseSelectProps> = ({
         value={selected}
         options={options}
         placeholder={placeholder}
+        filterOption={(candidate, input) => {
+          const term = input.trim();
+          if (!term) return true;
+          if (term.includes("อื่น")) {
+            return candidate.value === "อื่นๆ";
+          }
+          return candidate.label.includes(term) || candidate.value.includes(term);
+        }}
         inputValue={inputValue}
         onInputChange={(value) => {
           setInputValue(value);
