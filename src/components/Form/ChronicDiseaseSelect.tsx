@@ -236,14 +236,14 @@ const ChronicDiseaseSelect: React.FC<ChronicDiseaseSelectProps> = ({
         placeholder={placeholder}
         filterOption={(candidate, input) => {
           const term = input.trim();
-          if (!term) return true;
           if (allowCustom) {
-            if (candidate.value === "\u0e2d\u0e37\u0e48\u0e19\u0e46") return true;
             if (STATIC_VALUES.has(candidate.value)) return false;
+            if (!term) return true;
             return (
               candidate.label.includes(term) || candidate.value.includes(term)
             );
           }
+          if (!term) return true;
           return candidate.label.includes(term) || candidate.value.includes(term);
         }}
         inputValue={inputValue}
