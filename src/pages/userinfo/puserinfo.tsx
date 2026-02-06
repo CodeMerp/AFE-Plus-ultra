@@ -263,7 +263,7 @@ const Puserinfo = () => {
         setConfirmShow(true);
     };
 
-//if (dataUser.isLogin) return <div>loading...</div>;
+if (dataUser.isLogin) return <div>loading...</div>;
 
     return (
         <Container>
