@@ -220,9 +220,10 @@ export const getFlexTemplate = (
     if (postbackData) {
         contents.push({
             type: 'button',
-            color: '#FF0000',
+            style: 'primary',
             height: 'sm',
             margin: 'xxl',
+            color: '#ff0000',  // เพิ่มบรรทัดนี้
             action: {
                 type: 'postback',
                 label: 'ส่งขอความช่วยเหลือเพิ่มเติม',
@@ -1315,16 +1316,16 @@ export const replyNotificationPostback = async ({
                                     }
                                 },
                                 {
-                                            type: 'button',
-                                            color: "#1976D2",
-                                            style: 'primary',
-                                            height: 'sm',
-                                            action: {
-                                                type: 'uri',
-                                                label: 'ดูแผนที่จากระบบ',
-                                                //uri: `${WEB_API}/location?auToken=${userData.users_line_id}&idsafezone=${safezoneData.safezone_id}&idlocation=${locationData ? locationData.location_id : ''}`
-                                            }
-                                        },
+                                    type: 'button',
+                                    color: "#1976D2",
+                                    style: 'primary',
+                                    height: 'sm',
+                                    action: {
+                                        type: 'uri',
+                                        label: 'ดูแผนที่จากระบบ',
+                                        //uri: `${WEB_API}/location?auToken=${userData.users_line_id}&idsafezone=${safezoneData.safezone_id}&idlocation=${locationData ? locationData.location_id : ''}`
+                                    }
+                                },
                                 {
                                     type: "text",
                                     text: " ",
