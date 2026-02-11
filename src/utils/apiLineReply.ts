@@ -1166,7 +1166,7 @@ export const replyNotification = async ({
             messages: [
                 {
                     type: "flex",
-                    altText: "?????????",
+                    altText: "แจ้งเตือน",
                     contents: {
                         type: "bubble",
                         body: {
@@ -1180,7 +1180,7 @@ export const replyNotification = async ({
                                     contents: [
                                         {
                                             type: "span",
-                                            text: "????????",
+                                            text: "สถานะเคส",
                                             color: "#1976D2",
                                             size: "xl",
                                             weight: "bold",
