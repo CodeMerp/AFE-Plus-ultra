@@ -1,6 +1,7 @@
 ﻿import axios from 'axios';
 import moment from 'moment';
 import prisma from '@/lib/prisma';
+import { colors } from 'react-select/dist/declarations/src/theme';
 const WEB_API = process.env.WEB_API_URL;
 const LINE_MESSAGING_API = 'https://api.line.me/v2/bot/message/reply';
 const LINE_PUSH_MESSAGING_API = 'https://api.line.me/v2/bot/message/push';
@@ -221,14 +222,27 @@ export const getFlexTemplate = (
         contents.push({
             type: 'button',
             style: 'primary',
+            colors: "#ff0000",
             height: 'sm',
             margin: 'xxl',
             action: {
                 type: 'postback',
-                label: 'ส่งความช่วยเหลือเพิ่มเติม',
+                label: 'ส่งขอความช่วยเหลือเพิ่มเติม',
                 data: postbackData,
             },
         });
+
+        // 2. เพิ่มข้อความหมายเหตุต่อท้ายปุ่ม
+        contents.push({
+            type: 'text',
+            text: '*หมายเหตุ: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้ที่มีภาวะพึ่งพิง',
+            size: 'xs',      // ขนาดตัวอักษรเล็กพิเศษ
+            color: '#FF0000', // สีเทา เพื่อให้ดูเป็นหมายเหตุ
+            margin: 'md',     // ระยะห่างจากปุ่มด้านบน
+            wrap: true,       // ให้ขึ้นบรรทัดใหม่ได้ถ้าข้อความยาว
+            style: ''   // (ใส่เพิ่มได้) ทำเป็นตัวเอียง
+        });
+        
     }
 
     return {
@@ -1306,11 +1320,12 @@ export const replyNotificationPostback = async ({
                                 {
                                     type: "button",
                                     style: "primary",
+                                    colors: "#ff0000",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
                                         type: "postback",
-                                        label: "ส่งความช่วยเหลือเพิ่มเติม",
+                                        label: "ส่งขอความช่วยเหลือเพิ่มเติม",
                                         data: `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
@@ -1605,11 +1620,12 @@ export const replyNotificationPostbackTemp = async ({
                                 {
                                     type: "button",
                                     style: "primary",
+                                    colors: "#ff0000",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
                                         type: "postback",
-                                        label: "ส่งความช่วยเหลือเพิ่มเติม",
+                                        label: "ส่งขอความช่วยเหลือเพิ่มเติม",
                                         data: `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
@@ -1720,11 +1736,12 @@ export const replyNotificationPostbackfall = async ({
                                 {
                                     type: "button",
                                     style: "primary",
+                                    colors: "#ff0000",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
                                         type: "postback",
-                                        label: "ส่งความช่วยเหลือเพิ่มเติม",
+                                        label: "ส่งขอความช่วยเหลือเพิ่มเติม",
                                         data: `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
@@ -1836,11 +1853,12 @@ export const replyNotificationPostbackHeart = async ({
                                 {
                                     type: "button",
                                     style: "primary",
+                                    colors: "#ff0000",
                                     height: "sm",
                                     margin: "xxl",
                                     action: {
                                         type: "postback",
-                                        label: "ส่งความช่วยเหลือเพิ่มเติม",
+                                        label: "ส่งขอความช่วยเหลือเพิ่มเติม",
                                         data: `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
