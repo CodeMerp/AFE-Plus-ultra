@@ -134,10 +134,10 @@ interface ReplyLocationData {
 const baseline = (label: string, value: string, valueColor?: string) => ({
     type: 'box',
     layout: 'vertical',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     contents: [
-        { type: 'text', text: label, size: 'sm', color: '#555555', wrap: true, align: 'center' },
-        { type: 'text', text: value, size: 'sm', color: valueColor || '#111111', wrap: true, align: 'center' }
+        { type: 'text', text: label, size: 'sm', color: '#555555', wrap: true, align: 'start' },
+        { type: 'text', text: value, size: 'sm', color: valueColor || '#111111', wrap: true, align: 'start' }
     ]
 });
 const layoutBoxBaseline = (label: string, text: string, flex1 = 2, flex2 = 5) => {
