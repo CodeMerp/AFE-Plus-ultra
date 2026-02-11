@@ -249,7 +249,6 @@ export const getFlexTemplate = (
                     size: 'lg',
                     weight: 'bold',
                     wrap: true,
-                    align:'center'
                 },
             ],
         },
