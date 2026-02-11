@@ -38,6 +38,10 @@ interface ReplyNoti {
     replyToken : string;
     message    : string;
     userIdAccept: string;
+<<<<<<< HEAD
+=======
+    title?: string;
+>>>>>>> c853cda (แจ้งเตือนของเคส)
     buttons?: ReplyNotiButton[];
 }
 
@@ -84,14 +88,14 @@ const layoutBoxBaseline = (label: string, text: string, flex1 = 2, flex2 = 5) =>
     }
 }
 
-const header1 = () => {
+const header1 = (title = "แจ้งเตือนช่วยเหลือเพิ่มเติม") =>  {
     const h1 = {
         type: "text",
-        text: "แจ้งเตือนช่วยเหลือเพิ่มเติม",
+        text: title,
         contents: [
             {
                 type: "span",
-                text: "แจ้งเตือนช่วยเหลือเพิ่มเติม",
+                text: title,
                 color: "#FC0303",
                 size: "xl",
                 weight: "bold",
@@ -258,6 +262,10 @@ export const replyNoti = async ({
     replyToken,
     userIdAccept,
     message,
+<<<<<<< HEAD
+=======
+    title,
+>>>>>>> c853cda (แจ้งเตือนของเคส)
     buttons = [],
 }: ReplyNoti) => {
     try {
@@ -277,8 +285,8 @@ export const replyNoti = async ({
                             type: "box",
                             layout: "vertical",
                             contents: [
-                                header1()[0],
-                                header1()[1],
+                                header1(title)[0],
+                                header1(title)[1],
                                 {
                                     type: "text",
                                     text: `คุณ ${displayName}`,

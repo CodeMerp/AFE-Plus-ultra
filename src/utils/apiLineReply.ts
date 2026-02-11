@@ -1,4 +1,4 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 import moment from 'moment';
 import prisma from '@/lib/prisma';
 const WEB_API = process.env.WEB_API_URL;
@@ -130,13 +130,14 @@ interface ReplyLocationData {
     safezoneData?: any;
     locationData?: any;
 }
-// helper ทำแถวแบบ baseline (label : value) และรองรับกำหนดสี value
+// helper à¸—à¸³à¹à¸–à¸§à¹à¸šà¸š baseline (label : value) à¹à¸¥à¸°à¸£à¸­à¸‡à¸£à¸±à¸šà¸à¸³à¸«à¸™à¸”à¸ªà¸µ value
 const baseline = (label: string, value: string, valueColor?: string) => ({
     type: 'box',
-    layout: 'baseline',
+    layout: 'vertical',
+    alignItems: 'center',
     contents: [
-        { type: 'text', text: label, size: 'sm', color: '#555555', flex: 3, wrap: true },
-        { type: 'text', text: value, size: 'sm', color: valueColor || '#111111', flex: 5, wrap: true }
+        { type: 'text', text: label, size: 'sm', color: '#555555', wrap: true, align: 'center' },
+        { type: 'text', text: value, size: 'sm', color: valueColor || '#111111', wrap: true, align: 'center' }
     ]
 });
 const layoutBoxBaseline = (label: string, text: string, flex1 = 2, flex2 = 5) => {
@@ -163,7 +164,7 @@ const layoutBoxBaseline = (label: string, text: string, flex1 = 2, flex2 = 5) =>
     }
 }
 
-// การ์ด KPI สำหรับค่า Vital (ตัวเลขใหญ่ + หน่วย)
+// à¸à¸²à¸£à¹Œà¸” KPI à¸ªà¸³à¸«à¸£à¸±à¸šà¸„à¹ˆà¸² Vital (à¸•à¸±à¸§à¹€à¸¥à¸‚à¹ƒà¸«à¸à¹ˆ + à¸«à¸™à¹ˆà¸§à¸¢)
 const kpiBox = (label: string, value: string, unit: string, color: string) => ({
     type: 'box',
     layout: 'vertical',
@@ -180,10 +181,10 @@ const kpiBox = (label: string, value: string, unit: string, color: string) => ({
 });
 
 const SAFEZONE_STATUS_CONFIG: Record<number, { color: string; title: string; detail: string }> = {
-    0: { color: '#22C55E', title: '✅ ปลอดภัยแล้ว', detail: 'กลับเข้าสู่เขตปลอดภัย' },
-    1: { color: '#FFA500', title: '⚠️ แจ้งเตือนระดับ 1', detail: 'ออกนอกเขตปลอดภัยชั้นที่ 1' },
-    3: { color: '#FF8800', title: '🟠 เฝ้าระวังระดับ 2', detail: 'กำลังเข้าใกล้ขอบเขตชั้นที่ 2' },
-    2: { color: '#FF0000', title: '🚨 อันตรายสูงสุด!', detail: 'ออกนอกเขตปลอดภัยชั้นที่ 2' },
+    0: { color: '#22C55E', title: 'âœ… à¸›à¸¥à¸­à¸”à¸ à¸±à¸¢à¹à¸¥à¹‰à¸§', detail: 'à¸à¸¥à¸±à¸šà¹€à¸‚à¹‰à¸²à¸ªà¸¹à¹ˆà¹€à¸‚à¸•à¸›à¸¥à¸­à¸”à¸ à¸±à¸¢' },
+    1: { color: '#FFA500', title: 'âš ï¸ à¹à¸ˆà¹‰à¸‡à¹€à¸•à¸·à¸­à¸™à¸£à¸°à¸”à¸±à¸š 1', detail: 'à¸­à¸­à¸à¸™à¸­à¸à¹€à¸‚à¸•à¸›à¸¥à¸­à¸”à¸ à¸±à¸¢à¸Šà¸±à¹‰à¸™à¸—à¸µà¹ˆ 1' },
+    3: { color: '#FF8800', title: 'ðŸŸ  à¹€à¸à¹‰à¸²à¸£à¸°à¸§à¸±à¸‡à¸£à¸°à¸”à¸±à¸š 2', detail: 'à¸à¸³à¸¥à¸±à¸‡à¹€à¸‚à¹‰à¸²à¹ƒà¸à¸¥à¹‰à¸‚à¸­à¸šà¹€à¸‚à¸•à¸Šà¸±à¹‰à¸™à¸—à¸µà¹ˆ 2' },
+    2: { color: '#FF0000', title: 'ðŸš¨ à¸­à¸±à¸™à¸•à¸£à¸²à¸¢à¸ªà¸¹à¸‡à¸ªà¸¸à¸”!', detail: 'à¸­à¸­à¸à¸™à¸­à¸à¹€à¸‚à¸•à¸›à¸¥à¸­à¸”à¸ à¸±à¸¢à¸Šà¸±à¹‰à¸™à¸—à¸µà¹ˆ 2' },
 };
 
 export const getFlexTemplate = (
@@ -200,8 +201,13 @@ export const getFlexTemplate = (
             type: 'text',
             text: config.detail,
             size: 'md',
+<<<<<<< HEAD
             color: '#050505',
+=======
+            color: '#000000',
+>>>>>>> c853cda (แจ้งเตือนของเคส)
             wrap: true,
+            align: 'center',
         },
         { type: 'separator', margin: 'md' },
         {
@@ -210,9 +216,9 @@ export const getFlexTemplate = (
             margin: 'md',
             spacing: 'sm',
             contents: [
-                baseline('ชื่อผู้สูงอายุ', name),
-                baseline('พิกัดปัจจุบัน', `${latitude}, ${longitude}`),
-                baseline('เวลาแจ้งเตือน', timeText),
+                baseline('à¸Šà¸·à¹ˆà¸­à¸œà¸¹à¹‰à¸ªà¸¹à¸‡à¸­à¸²à¸¢à¸¸', name),
+                baseline('à¸žà¸´à¸à¸±à¸”à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™', `${latitude}, ${longitude}`),
+                baseline('à¹€à¸§à¸¥à¸²à¹à¸ˆà¹‰à¸‡à¹€à¸•à¸·à¸­à¸™', timeText),
             ],
         },
     ];
@@ -225,7 +231,7 @@ export const getFlexTemplate = (
             margin: 'xxl',
             action: {
                 type: 'postback',
-                label: 'ส่งความช่วยเหลือเพิ่มเติม',
+                label: 'à¸ªà¹ˆà¸‡à¸„à¸§à¸²à¸¡à¸Šà¹ˆà¸§à¸¢à¹€à¸«à¸¥à¸·à¸­à¹€à¸žà¸´à¹ˆà¸¡à¹€à¸•à¸´à¸¡',
                 data: postbackData,
             },
         });
@@ -246,6 +252,7 @@ export const getFlexTemplate = (
                     size: 'lg',
                     weight: 'bold',
                     wrap: true,
+                    align: 'center',
                 },
             ],
         },
@@ -328,7 +335,7 @@ export const replyRegistration = async ({
             messages: [
                 {
                     type: "flex",
-                    altText: "ลงทะเบียน",
+                    altText: "à¸¥à¸‡à¸—à¸°à¹€à¸šà¸µà¸¢à¸™",
                     contents: {
                         type: "bubble",
                         body: {
@@ -337,7 +344,7 @@ export const replyRegistration = async ({
                             contents: [
                                 {
                                     type: "text",
-                                    text: "ลงทะเบียน",
+                                    text: "à¸¥à¸‡à¸—à¸°à¹€à¸šà¸µà¸¢à¸™",
                                     color: "#FFB400",
                                     size: "xl",
                                     weight: "bold",
@@ -345,7 +352,7 @@ export const replyRegistration = async ({
                                 },
                                 {
                                     type: "text",
-                                    text: `คุณ ${profile.displayName}`,
+                                    text: `à¸„à¸¸à¸“ ${profile.displayName}`,
                                     size: "sm",
                                     color: "#555555",
                                     wrap: true,
@@ -362,7 +369,7 @@ export const replyRegistration = async ({
                                     margin: "xxl",
                                     action: {
                                         type: "uri",
-                                        label: "ยืนยันลงทะเบียน",
+                                        label: "à¸¢à¸·à¸™à¸¢à¸±à¸™à¸¥à¸‡à¸—à¸°à¹€à¸šà¸µà¸¢à¸™",
                                         uri: `${WEB_API}/registration?auToken=${userId}`
                                     }
                                 },
@@ -391,7 +398,7 @@ export const replyNotRegistration = async ({
             messages: [
                 {
                     type: "flex",
-                    altText: "ลงทะเบียน",
+                    altText: "à¸¥à¸‡à¸—à¸°à¹€à¸šà¸µà¸¢à¸™",
                     contents: {
                         type: "bubble",
                         body: {
@@ -400,7 +407,7 @@ export const replyNotRegistration = async ({
                             contents: [
                                 {
                                     type: "text",
-                                    text: "ลงทะเบียน",
+                                    text: "à¸¥à¸‡à¸—à¸°à¹€à¸šà¸µà¸¢à¸™",
                                     color: "#FFB400",
                                     size: "xl",
                                     weight: "bold",
@@ -408,7 +415,7 @@ export const replyNotRegistration = async ({
                                 },
                                 {
                                     type: "text",
-                                    text: `คุณ ${profile.displayName} ยังไม่ได้ลงทะเบียน กรูณาลงทะเบียนก่อนเข้าใช้งาน`,
+                                    text: `à¸„à¸¸à¸“ ${profile.displayName} à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¹„à¸”à¹‰à¸¥à¸‡à¸—à¸°à¹€à¸šà¸µà¸¢à¸™ à¸à¸£à¸¹à¸“à¸²à¸¥à¸‡à¸—à¸°à¹€à¸šà¸µà¸¢à¸™à¸à¹ˆà¸­à¸™à¹€à¸‚à¹‰à¸²à¹ƒà¸Šà¹‰à¸‡à¸²à¸™`,
                                     size: "sm",
                                     color: "#555555",
                                     wrap: true,
@@ -425,7 +432,7 @@ export const replyNotRegistration = async ({
                                     margin: "xxl",
                                     action: {
                                         type: "uri",
-                                        label: "ยืนยันลงทะเบียน",
+                                        label: "à¸¢à¸·à¸™à¸¢à¸±à¸™à¸¥à¸‡à¸—à¸°à¹€à¸šà¸µà¸¢à¸™",
                                         uri: `${WEB_API}/registration?auToken=${userId}`
                                     }
                                 },
@@ -454,7 +461,7 @@ export const replyMenuBorrowequipment = async ({
             messages: [
                 {
                     type: "flex",
-                    altText: "การยืม การคืนครุภัณฑ์",
+                    altText: "à¸à¸²à¸£à¸¢à¸·à¸¡ à¸à¸²à¸£à¸„à¸·à¸™à¸„à¸£à¸¸à¸ à¸±à¸“à¸‘à¹Œ",
                     contents: {
                         type: "bubble",
                         body: {
@@ -463,7 +470,7 @@ export const replyMenuBorrowequipment = async ({
                             contents: [
                                 {
                                     type: "text",
-                                    text: "การยืม การคืนครุภัณฑ์",
+                                    text: "à¸à¸²à¸£à¸¢à¸·à¸¡ à¸à¸²à¸£à¸„à¸·à¸™à¸„à¸£à¸¸à¸ à¸±à¸“à¸‘à¹Œ",
                                     color: "#FFB400",
                                     size: "xl",
                                     weight: "bold",
@@ -471,7 +478,7 @@ export const replyMenuBorrowequipment = async ({
                                 },
                                 {
                                     type: "text",
-                                    text: `คุณ ${profile.displayName}`,
+                                    text: `à¸„à¸¸à¸“ ${profile.displayName}`,
                                     size: "sm",
                                     color: "#555555",
                                     wrap: true,
@@ -488,7 +495,7 @@ export const replyMenuBorrowequipment = async ({
                                     margin: "xxl",
                                     action: {
                                         type: "uri",
-                                        label: "การยืมครุภัณฑ์",
+                                        label: "à¸à¸²à¸£à¸¢à¸·à¸¡à¸„à¸£à¸¸à¸ à¸±à¸“à¸‘à¹Œ",
                                         uri: `${WEB_API}/borrowequipment/borrow?auToken=${userData.users_line_id}`
                                     }
                                 },
@@ -500,7 +507,7 @@ export const replyMenuBorrowequipment = async ({
                                     color: "#4477CE",
                                     action: {
                                         type: "uri",
-                                        label: "การคืนครุภัณฑ์",
+                                        label: "à¸à¸²à¸£à¸„à¸·à¸™à¸„à¸£à¸¸à¸ à¸±à¸“à¸‘à¹Œ",
                                         uri: `${WEB_API}/borrowequipment/return_of?auToken=${userData.users_line_id}`
                                     }
                                 },
@@ -529,7 +536,7 @@ export const replyConnection = async ({
             messages: [
                 {
                     type: "flex",
-                    altText: "การเชื่อมต่อนาฬิกา",
+                    altText: "à¸à¸²à¸£à¹€à¸Šà¸·à¹ˆà¸­à¸¡à¸•à¹ˆà¸­à¸™à¸²à¸¬à¸´à¸à¸²",
                     contents: {
                         type: "bubble",
                         body: {
@@ -538,7 +545,7 @@ export const replyConnection = async ({
                             contents: [
                                 {
                                     type: "text",
-                                    text: "การเชื่อมต่อนาฬิกา",
+                                    text: "à¸à¸²à¸£à¹€à¸Šà¸·à¹ˆà¸­à¸¡à¸•à¹ˆà¸­à¸™à¸²à¸¬à¸´à¸à¸²",
                                     color: "#FFB400",
                                     size: "xl",
                                     weight: "bold",
@@ -546,7 +553,7 @@ export const replyConnection = async ({
                                 },
                                 {
                                     type: "text",
-                                    text: `คุณ ${profile.displayName}`,
+                                    text: `à¸„à¸¸à¸“ ${profile.displayName}`,
                                     size: "sm",
                                     color: "#555555",
                                     wrap: true,
@@ -558,7 +565,7 @@ export const replyConnection = async ({
                                 },
                                 {
                                     type: "text",
-                                    text: `ข้อมูลผู้ดูแล`,
+                                    text: `à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸œà¸¹à¹‰à¸”à¸¹à¹à¸¥`,
                                     size: "md",
                                     color: "#555555",
                                     wrap: true,
@@ -570,14 +577,14 @@ export const replyConnection = async ({
                                     margin: "xxl",
                                     spacing: "sm",
                                     contents: [
-                                        layoutBoxBaseline("ชื่อ-สกุล", `${userData.users_fname} ${userData.users_sname}`, 4, 5),
-                                        layoutBoxBaseline("เบอร์โทร", `${userData.users_tel1 || '-'}`, 4, 5),
+                                        layoutBoxBaseline("à¸Šà¸·à¹ˆà¸­-à¸ªà¸à¸¸à¸¥", `${userData.users_fname} ${userData.users_sname}`, 4, 5),
+                                        layoutBoxBaseline("à¹€à¸šà¸­à¸£à¹Œà¹‚à¸—à¸£", `${userData.users_tel1 || '-'}`, 4, 5),
                                     ]
 
                                 },
                                 {
                                     type: "text",
-                                    text: `ข้อมูลผู้ที่มีภาวะพึ่งพิง`,
+                                    text: `à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸œà¸¹à¹‰à¸—à¸µà¹ˆà¸¡à¸µà¸ à¸²à¸§à¸°à¸žà¸¶à¹ˆà¸‡à¸žà¸´à¸‡`,
                                     size: "md",
                                     color: "#555555",
                                     wrap: true,
@@ -589,8 +596,8 @@ export const replyConnection = async ({
                                     margin: "xxl",
                                     spacing: "sm",
                                     contents: [
-                                        layoutBoxBaseline("ชื่อ-สกุล", `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`, 4, 5),
-                                        layoutBoxBaseline("เบอร์โทร", `${userTakecarepersonData.takecare_tel1 || '-'}`, 4, 5),
+                                        layoutBoxBaseline("à¸Šà¸·à¹ˆà¸­-à¸ªà¸à¸¸à¸¥", `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`, 4, 5),
+                                        layoutBoxBaseline("à¹€à¸šà¸­à¸£à¹Œà¹‚à¸—à¸£", `${userTakecarepersonData.takecare_tel1 || '-'}`, 4, 5),
                                     ]
 
                                 },
@@ -611,7 +618,7 @@ export const replyConnection = async ({
                                 //     margin: "xxl",
                                 //     action: {
                                 //         type : "uri",
-                                //         label: "ตั้งค่าการเชื่อมต่อนาฬิกา",
+                                //         label: "à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²à¸à¸²à¸£à¹€à¸Šà¸·à¹ˆà¸­à¸¡à¸•à¹ˆà¸­à¸™à¸²à¸¬à¸´à¸à¸²",
                                 //         uri  : `${WEB_API}/connection?auToken=${userData.users_line_id}`
                                 //     }
                                 // },
@@ -636,7 +643,7 @@ export const replyLocation = async ({
     locationData
 }: ReplyLocationData) => {
     try {
-        // 1) พิกัด
+        // 1) à¸žà¸´à¸à¸±à¸”
         let latitude = Number(safezoneData.safez_latitude);
         let longitude = Number(safezoneData.safez_longitude);
         if (locationData) {
@@ -644,7 +651,7 @@ export const replyLocation = async ({
             longitude = Number(locationData.locat_longitude);
         }
 
-        // 2) ดึงค่า Temp/HR "ล่าสุด" (ไม่แสดงเวลา/คำว่าล่าสุด)
+        // 2) à¸”à¸¶à¸‡à¸„à¹ˆà¸² Temp/HR "à¸¥à¹ˆà¸²à¸ªà¸¸à¸”" (à¹„à¸¡à¹ˆà¹à¸ªà¸”à¸‡à¹€à¸§à¸¥à¸²/à¸„à¸³à¸§à¹ˆà¸²à¸¥à¹ˆà¸²à¸ªà¸¸à¸”)
         const userIdNum = Number(userData.users_id);
         const takecareIdNum = Number(userTakecarepersonData.takecare_id);
 
@@ -661,27 +668,27 @@ export const replyLocation = async ({
             })
         ]);
 
-        const tempVal = lastTemp ? Number(lastTemp.temperature_value).toFixed(1) : '—';
-        const hrVal = lastHR ? String(Number(lastHR.bpm)) : '—';
+        const tempVal = lastTemp ? Number(lastTemp.temperature_value).toFixed(1) : 'â€”';
+        const hrVal = lastHR ? String(Number(lastHR.bpm)) : 'â€”';
 
-        const tempColor = lastTemp?.status === 1 ? '#E11D48' : '#0EA5E9'; // แดงถ้าผิดปกติ, ฟ้าเมื่อปกติ
-        const hrColor = lastHR?.status === 1 ? '#E11D48' : '#10B981';   // แดงถ้าผิดปกติ, เขียวเมื่อปกติ
+        const tempColor = lastTemp?.status === 1 ? '#E11D48' : '#0EA5E9'; // à¹à¸”à¸‡à¸–à¹‰à¸²à¸œà¸´à¸”à¸›à¸à¸•à¸´, à¸Ÿà¹‰à¸²à¹€à¸¡à¸·à¹ˆà¸­à¸›à¸à¸•à¸´
+        const hrColor = lastHR?.status === 1 ? '#E11D48' : '#10B981';   // à¹à¸”à¸‡à¸–à¹‰à¸²à¸œà¸´à¸”à¸›à¸à¸•à¸´, à¹€à¸‚à¸µà¸¢à¸§à¹€à¸¡à¸·à¹ˆà¸­à¸›à¸à¸•à¸´
 
         const requestData = {
             replyToken,
             messages: [
-                // แผนที่ตำแหน่ง (ข้อความประเภท location เพิ่มอะไรไม่ได้)
+                // à¹à¸œà¸™à¸—à¸µà¹ˆà¸•à¸³à¹à¸«à¸™à¹ˆà¸‡ (à¸‚à¹‰à¸­à¸„à¸§à¸²à¸¡à¸›à¸£à¸°à¹€à¸ à¸— location à¹€à¸žà¸´à¹ˆà¸¡à¸­à¸°à¹„à¸£à¹„à¸¡à¹ˆà¹„à¸”à¹‰)
                 {
                     type: 'location',
-                    title: `ตำแหน่งปัจจุบันของผู้ที่มีภาวะพึ่งพิง ${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`,
-                    address: 'สถานที่ตั้งปัจจุบันของผู้ที่มีภาวะพึ่งพิง',
+                    title: `à¸•à¸³à¹à¸«à¸™à¹ˆà¸‡à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™à¸‚à¸­à¸‡à¸œà¸¹à¹‰à¸—à¸µà¹ˆà¸¡à¸µà¸ à¸²à¸§à¸°à¸žà¸¶à¹ˆà¸‡à¸žà¸´à¸‡ ${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`,
+                    address: 'à¸ªà¸–à¸²à¸™à¸—à¸µà¹ˆà¸•à¸±à¹‰à¸‡à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™à¸‚à¸­à¸‡à¸œà¸¹à¹‰à¸—à¸µà¹ˆà¸¡à¸µà¸ à¸²à¸§à¸°à¸žà¸¶à¹ˆà¸‡à¸žà¸´à¸‡',
                     latitude,
                     longitude
                 },
-                // Flex การ์ดรายละเอียด + Vitals ดีไซน์ใหม่
+                // Flex à¸à¸²à¸£à¹Œà¸”à¸£à¸²à¸¢à¸¥à¸°à¹€à¸­à¸µà¸¢à¸” + Vitals à¸”à¸µà¹„à¸‹à¸™à¹Œà¹ƒà¸«à¸¡à¹ˆ
                 {
                     type: 'flex',
-                    altText: 'ข้อมูลตำแหน่งและสุขภาพ',
+                    altText: 'à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸•à¸³à¹à¸«à¸™à¹ˆà¸‡à¹à¸¥à¸°à¸ªà¸¸à¸‚à¸ à¸²à¸ž',
                     contents: {
                         type: 'bubble',
                         body: {
@@ -692,7 +699,7 @@ export const replyLocation = async ({
                             contents: [
                                 {
                                     type: 'text',
-                                    text: 'ตำแหน่งปัจจุบัน',
+                                    text: 'à¸•à¸³à¹à¸«à¸™à¹ˆà¸‡à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™',
                                     color: '#111111',
                                     size: 'xl',
                                     weight: 'bold'
@@ -702,25 +709,25 @@ export const replyLocation = async ({
                                     layout: 'vertical',
                                     spacing: '6px',
                                     contents: [
-                                        baseline('ชื่อ-สกุล', `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`),
+                                        baseline('à¸Šà¸·à¹ˆà¸­-à¸ªà¸à¸¸à¸¥', `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`),
                                         baseline('Latitude', String(latitude)),
                                         baseline('Longitude', String(longitude))
                                     ]
                                 },
                                 { type: 'separator', margin: 'md' },
 
-                                // แถว KPI vitals (สวยและอ่านง่าย)
+                                // à¹à¸–à¸§ KPI vitals (à¸ªà¸§à¸¢à¹à¸¥à¸°à¸­à¹ˆà¸²à¸™à¸‡à¹ˆà¸²à¸¢)
                                 {
                                     type: 'box',
                                     layout: 'horizontal',
                                     spacing: '12px',
                                     contents: [
-                                        kpiBox('อุณหภูมิ', tempVal, '°C', tempColor),
-                                        kpiBox('ชีพจร', hrVal, 'bpm', hrColor)
+                                        kpiBox('à¸­à¸¸à¸“à¸«à¸ à¸¹à¸¡à¸´', tempVal, 'Â°C', tempColor),
+                                        kpiBox('à¸Šà¸µà¸žà¸ˆà¸£', hrVal, 'bpm', hrColor)
                                     ]
                                 },
 
-                                // ปุ่มต่าง ๆ
+                                // à¸›à¸¸à¹ˆà¸¡à¸•à¹ˆà¸²à¸‡ à¹†
                                 {
                                     type: 'box',
                                     layout: 'vertical',
@@ -734,13 +741,13 @@ export const replyLocation = async ({
                                             height: 'sm',
                                             action: userTakecarepersonData.takecare_tel1 ? {
                                                 type: 'uri',
-                                                label: `โทร ${userTakecarepersonData.takecare_tel1}`,
+                                                label: `à¹‚à¸—à¸£ ${userTakecarepersonData.takecare_tel1}`,
                                                 uri: `tel:${userTakecarepersonData.takecare_tel1}`
                                             }
                                                 : {
                                                     type: 'message',
-                                                    label: 'โทร',
-                                                    text: 'ไม่มีข้อมูลเบอร์โทรศัพท์ของผู้มีภาวะพึ่งพิง'
+                                                    label: 'à¹‚à¸—à¸£',
+                                                    text: 'à¹„à¸¡à¹ˆà¸¡à¸µà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¹€à¸šà¸­à¸£à¹Œà¹‚à¸—à¸£à¸¨à¸±à¸žà¸—à¹Œà¸‚à¸­à¸‡à¸œà¸¹à¹‰à¸¡à¸µà¸ à¸²à¸§à¸°à¸žà¸¶à¹ˆà¸‡à¸žà¸´à¸‡'
                                                 }
                                         },
 
@@ -750,7 +757,7 @@ export const replyLocation = async ({
                                             height: 'sm',
                                             action: {
                                                 type: 'uri',
-                                                label: 'ดูแผนที่จากระบบ',
+                                                label: 'à¸”à¸¹à¹à¸œà¸™à¸—à¸µà¹ˆà¸ˆà¸²à¸à¸£à¸°à¸šà¸š',
                                                 uri: `${WEB_API}/location?auToken=${userData.users_line_id}&idsafezone=${safezoneData.safezone_id}&idlocation=${locationData ? locationData.location_id : ''}`
                                             }
                                         }
@@ -778,7 +785,7 @@ export const replySetting = async ({
     heartrateSettingData
 }: ReplySettingData & { temperatureSettingData?: any }) => {
     try {
-        // ค่า default
+        // à¸„à¹ˆà¸² default
         let r1 = 0;
         let r2 = 0;
         let idsafezone = 0;
@@ -809,7 +816,7 @@ export const replySetting = async ({
             messages: [
                 {
                     type: "flex",
-                    altText: "ตั้งค่าความปลอดภัย",
+                    altText: "à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²à¸„à¸§à¸²à¸¡à¸›à¸¥à¸­à¸”à¸ à¸±à¸¢",
                     contents: {
                         type: "bubble",
                         body: {
@@ -818,7 +825,7 @@ export const replySetting = async ({
                             contents: [
                                 {
                                     type: "text",
-                                    text: "ตั้งค่าความปลอดภัย",
+                                    text: "à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²à¸„à¸§à¸²à¸¡à¸›à¸¥à¸­à¸”à¸ à¸±à¸¢",
                                     color: "#FFB400",
                                     size: "xl",
                                     weight: "bold",
@@ -838,7 +845,7 @@ export const replySetting = async ({
                                             type: "box",
                                             layout: "baseline",
                                             contents: [
-                                                { type: "text", text: "ชื่อ", flex: 2, weight: "bold" },
+                                                { type: "text", text: "à¸Šà¸·à¹ˆà¸­", flex: 2, weight: "bold" },
                                                 { type: "text", text: `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`, flex: 3, wrap: true }
                                             ]
                                         },
@@ -846,32 +853,32 @@ export const replySetting = async ({
                                             type: "box",
                                             layout: "baseline",
                                             contents: [
-                                                { type: "text", text: "รัศมี ชั้นที่ 1", flex: 2, weight: "bold" },
-                                                { type: "text", text: `${r1} เมตร`, flex: 3 }
+                                                { type: "text", text: "à¸£à¸±à¸¨à¸¡à¸µ à¸Šà¸±à¹‰à¸™à¸—à¸µà¹ˆ 1", flex: 2, weight: "bold" },
+                                                { type: "text", text: `${r1} à¹€à¸¡à¸•à¸£`, flex: 3 }
                                             ]
                                         },
                                         {
                                             type: "box",
                                             layout: "baseline",
                                             contents: [
-                                                { type: "text", text: "รัศมี ชั้นที่ 2", flex: 2, weight: "bold" },
-                                                { type: "text", text: `${r2} เมตร`, flex: 3 }
+                                                { type: "text", text: "à¸£à¸±à¸¨à¸¡à¸µ à¸Šà¸±à¹‰à¸™à¸—à¸µà¹ˆ 2", flex: 2, weight: "bold" },
+                                                { type: "text", text: `${r2} à¹€à¸¡à¸•à¸£`, flex: 3 }
                                             ]
                                         },
                                         {
                                             type: "box",
                                             layout: "baseline",
                                             contents: [
-                                                { type: "text", text: "อุณหภูมิ", flex: 2, weight: "bold" },
-                                                { type: "text", text: `${maxTemperature} องศา`, flex: 3 }
+                                                { type: "text", text: "à¸­à¸¸à¸“à¸«à¸ à¸¹à¸¡à¸´", flex: 2, weight: "bold" },
+                                                { type: "text", text: `${maxTemperature} à¸­à¸‡à¸¨à¸²`, flex: 3 }
                                             ]
                                         },
                                         {
                                             type: "box",
                                             layout: "baseline",
                                             contents: [
-                                                { type: "text", text: "ชีพจร", flex: 2, weight: "bold" },
-                                                { type: "text", text: `${maxBpm} ครั้งต่อนาที`, flex: 3 }
+                                                { type: "text", text: "à¸Šà¸µà¸žà¸ˆà¸£", flex: 2, weight: "bold" },
+                                                { type: "text", text: `${maxBpm} à¸„à¸£à¸±à¹‰à¸‡à¸•à¹ˆà¸­à¸™à¸²à¸—à¸µ`, flex: 3 }
                                             ]
                                         }
                                     ]
@@ -883,7 +890,7 @@ export const replySetting = async ({
                                     margin: "xxl",
                                     action: {
                                         type: "uri",
-                                        label: "ตั้งค่าเขตปลอดภัย",
+                                        label: "à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²à¹€à¸‚à¸•à¸›à¸¥à¸­à¸”à¸ à¸±à¸¢",
                                         uri: `${WEB_API}/setting?auToken=${userData.users_line_id}&idsafezone=${idsafezone}`
                                     }
                                 },
@@ -895,7 +902,7 @@ export const replySetting = async ({
                                     color: "#4477CE",
                                     action: {
                                         type: "uri",
-                                        label: "ตั้งค่าอุณหภูมิร่างกาย",
+                                        label: "à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²à¸­à¸¸à¸“à¸«à¸ à¸¹à¸¡à¸´à¸£à¹ˆà¸²à¸‡à¸à¸²à¸¢",
                                         uri: `${WEB_API}/settingTemp?auToken=${userData.users_line_id}&idsetting=${idSetting || ''}`
                                     }
                                 },
@@ -907,7 +914,7 @@ export const replySetting = async ({
                                     color: "#60C4A9",
                                     action: {
                                         type: "uri",
-                                        label: "ตั้งค่าชีพจร",
+                                        label: "à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²à¸Šà¸µà¸žà¸ˆà¸£",
                                         uri: `${WEB_API}/settingHeartRate?auToken=${userData.users_line_id}&idsetting=${idSettingHR || ''}`
                                     }
                                 }
@@ -934,23 +941,23 @@ export const replyUserInfo = async ({
     try {
         // const profile = await getUserProfile(userData.users_line_id);
         let contentTakecareperson = [
-            layoutBoxBaseline("ข้อมูล", 'ยังไม่ได้เพิ่มข้อมูลผู้มีภาวะพึ่งพิง'),
+            layoutBoxBaseline("à¸‚à¹‰à¸­à¸¡à¸¹à¸¥", 'à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¹„à¸”à¹‰à¹€à¸žà¸´à¹ˆà¸¡à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸œà¸¹à¹‰à¸¡à¸µà¸ à¸²à¸§à¸°à¸žà¸¶à¹ˆà¸‡à¸žà¸´à¸‡'),
         ]
 
         if (userTakecarepersonData) {
             contentTakecareperson = [
-                layoutBoxBaseline("ชื่อ-สกุล", `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`, 4, 5),
-                layoutBoxBaseline("วันเดือนปีเกิด", `${moment(userTakecarepersonData.takecare_birthday).format('DD/MM/YYYY')}`, 4, 5),
-                layoutBoxBaseline("ที่อยู่", `${userTakecarepersonData.takecare_number || '-'} หมู่ ${userTakecarepersonData.takecare_moo || '-'}`, 4, 5),
-                layoutBoxBaseline("ถนน", `${userTakecarepersonData.takecare_road || '-'}`, 4, 5),
-                layoutBoxBaseline("ตำบล", `${userTakecarepersonData.takecare_tubon || '-'}`, 4, 5),
-                layoutBoxBaseline("อำเภอ", `${userTakecarepersonData.takecare_amphur || '-'}`, 4, 5),
-                layoutBoxBaseline("จังหวัด", `${userTakecarepersonData.takecare_province || '-'}`, 4, 5),
-                layoutBoxBaseline("รหัสไปรษณีย์", `${userTakecarepersonData.takecare_postcode || '-'}`, 4, 5),
-                layoutBoxBaseline("เบอร์โทรศัพท์มือถือ", `${userTakecarepersonData.takecare_tel1 || '-'}`, 4, 5),
-                layoutBoxBaseline("เบอร์โทรศัพท์บ้าน", `${userTakecarepersonData.takecare_tel_home || '-'}`, 4, 5),
-                layoutBoxBaseline("โรคประจำตัว", `${userTakecarepersonData.takecare_disease || '-'}`, 4, 5),
-                layoutBoxBaseline("ยาที่ใช้ประจำ", `${userTakecarepersonData.takecare_drug || '-'}`, 4, 5),
+                layoutBoxBaseline("à¸Šà¸·à¹ˆà¸­-à¸ªà¸à¸¸à¸¥", `${userTakecarepersonData.takecare_fname} ${userTakecarepersonData.takecare_sname}`, 4, 5),
+                layoutBoxBaseline("à¸§à¸±à¸™à¹€à¸”à¸·à¸­à¸™à¸›à¸µà¹€à¸à¸´à¸”", `${moment(userTakecarepersonData.takecare_birthday).format('DD/MM/YYYY')}`, 4, 5),
+                layoutBoxBaseline("à¸—à¸µà¹ˆà¸­à¸¢à¸¹à¹ˆ", `${userTakecarepersonData.takecare_number || '-'} à¸«à¸¡à¸¹à¹ˆ ${userTakecarepersonData.takecare_moo || '-'}`, 4, 5),
+                layoutBoxBaseline("à¸–à¸™à¸™", `${userTakecarepersonData.takecare_road || '-'}`, 4, 5),
+                layoutBoxBaseline("à¸•à¸³à¸šà¸¥", `${userTakecarepersonData.takecare_tubon || '-'}`, 4, 5),
+                layoutBoxBaseline("à¸­à¸³à¹€à¸ à¸­", `${userTakecarepersonData.takecare_amphur || '-'}`, 4, 5),
+                layoutBoxBaseline("à¸ˆà¸±à¸‡à¸«à¸§à¸±à¸”", `${userTakecarepersonData.takecare_province || '-'}`, 4, 5),
+                layoutBoxBaseline("à¸£à¸«à¸±à¸ªà¹„à¸›à¸£à¸©à¸“à¸µà¸¢à¹Œ", `${userTakecarepersonData.takecare_postcode || '-'}`, 4, 5),
+                layoutBoxBaseline("à¹€à¸šà¸­à¸£à¹Œà¹‚à¸—à¸£à¸¨à¸±à¸žà¸—à¹Œà¸¡à¸·à¸­à¸–à¸·à¸­", `${userTakecarepersonData.takecare_tel1 || '-'}`, 4, 5),
+                layoutBoxBaseline("à¹€à¸šà¸­à¸£à¹Œà¹‚à¸—à¸£à¸¨à¸±à¸žà¸—à¹Œà¸šà¹‰à¸²à¸™", `${userTakecarepersonData.takecare_tel_home || '-'}`, 4, 5),
+                layoutBoxBaseline("à¹‚à¸£à¸„à¸›à¸£à¸°à¸ˆà¸³à¸•à¸±à¸§", `${userTakecarepersonData.takecare_disease || '-'}`, 4, 5),
+                layoutBoxBaseline("à¸¢à¸²à¸—à¸µà¹ˆà¹ƒà¸Šà¹‰à¸›à¸£à¸°à¸ˆà¸³", `${userTakecarepersonData.takecare_drug || '-'}`, 4, 5),
             ]
         }
 
@@ -959,7 +966,7 @@ export const replyUserInfo = async ({
             messages: [
                 {
                     type: "flex",
-                    altText: "ข้อมูลผู้ใช้งาน",
+                    altText: "à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸œà¸¹à¹‰à¹ƒà¸Šà¹‰à¸‡à¸²à¸™",
                     contents: {
                         type: "bubble",
                         body: {
@@ -968,7 +975,7 @@ export const replyUserInfo = async ({
                             contents: [
                                 {
                                     type: "text",
-                                    text: "ข้อมูลผู้ใช้งาน",
+                                    text: "à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸œà¸¹à¹‰à¹ƒà¸Šà¹‰à¸‡à¸²à¸™",
                                     color: "#FFB400",
                                     size: "xl",
                                     weight: "bold",
@@ -980,7 +987,7 @@ export const replyUserInfo = async ({
                                 },
                                 {
                                     type: "text",
-                                    text: `ข้อมูลผู้ดูแล`,
+                                    text: `à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸œà¸¹à¹‰à¸”à¸¹à¹à¸¥`,
                                     size: "md",
                                     color: "#555555",
                                     wrap: true,
@@ -993,15 +1000,15 @@ export const replyUserInfo = async ({
                                     margin: "xxl",
                                     spacing: "sm",
                                     contents: [
-                                        layoutBoxBaseline("ชื่อ-สกุล", `${userData.users_fname} ${userData.users_sname}`, 4, 5),
-                                        layoutBoxBaseline("ที่อยู่", `${userData.users_number || '-'} หมู่ ${userData.users_moo || '-'}`, 4, 5),
-                                        layoutBoxBaseline("ถนน", `${userData.users_road || '-'}`, 4, 5),
-                                        layoutBoxBaseline("ตำบล", `${userData.users_tubon || '-'}`, 4, 5),
-                                        layoutBoxBaseline("อำเภอ", `${userData.users_amphur || '-'}`, 4, 5),
-                                        layoutBoxBaseline("จังหวัด", `${userData.users_province || '-'}`, 4, 5),
-                                        layoutBoxBaseline("รหัสไปรษณีย์", `${userData.users_postcode || '-'}`, 4, 5),
-                                        layoutBoxBaseline("เบอร์โทรศัพท์มือถือ", `${userData.users_tel1 || '-'}`, 4, 5),
-                                        layoutBoxBaseline("เบอร์โทรศัพท์บ้าน", `${userData.users_tel_home || '-'}`, 4, 5),
+                                        layoutBoxBaseline("à¸Šà¸·à¹ˆà¸­-à¸ªà¸à¸¸à¸¥", `${userData.users_fname} ${userData.users_sname}`, 4, 5),
+                                        layoutBoxBaseline("à¸—à¸µà¹ˆà¸­à¸¢à¸¹à¹ˆ", `${userData.users_number || '-'} à¸«à¸¡à¸¹à¹ˆ ${userData.users_moo || '-'}`, 4, 5),
+                                        layoutBoxBaseline("à¸–à¸™à¸™", `${userData.users_road || '-'}`, 4, 5),
+                                        layoutBoxBaseline("à¸•à¸³à¸šà¸¥", `${userData.users_tubon || '-'}`, 4, 5),
+                                        layoutBoxBaseline("à¸­à¸³à¹€à¸ à¸­", `${userData.users_amphur || '-'}`, 4, 5),
+                                        layoutBoxBaseline("à¸ˆà¸±à¸‡à¸«à¸§à¸±à¸”", `${userData.users_province || '-'}`, 4, 5),
+                                        layoutBoxBaseline("à¸£à¸«à¸±à¸ªà¹„à¸›à¸£à¸©à¸“à¸µà¸¢à¹Œ", `${userData.users_postcode || '-'}`, 4, 5),
+                                        layoutBoxBaseline("à¹€à¸šà¸­à¸£à¹Œà¹‚à¸—à¸£à¸¨à¸±à¸žà¸—à¹Œà¸¡à¸·à¸­à¸–à¸·à¸­", `${userData.users_tel1 || '-'}`, 4, 5),
+                                        layoutBoxBaseline("à¹€à¸šà¸­à¸£à¹Œà¹‚à¸—à¸£à¸¨à¸±à¸žà¸—à¹Œà¸šà¹‰à¸²à¸™", `${userData.users_tel_home || '-'}`, 4, 5),
                                     ]
 
                                 },
@@ -1011,7 +1018,7 @@ export const replyUserInfo = async ({
                                 },
                                 {
                                     type: "text",
-                                    text: `ข้อมูลผู้ที่มีภาวะพึ่งพิง`,
+                                    text: `à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸œà¸¹à¹‰à¸—à¸µà¹ˆà¸¡à¸µà¸ à¸²à¸§à¸°à¸žà¸¶à¹ˆà¸‡à¸žà¸´à¸‡`,
                                     size: "md",
                                     color: "#555555",
                                     wrap: true,
@@ -1035,7 +1042,7 @@ export const replyUserInfo = async ({
                                     margin: "xxl",
                                     action: {
                                         type: "uri",
-                                        label: "ตั้งค่าข้อมูลผู้ดูแล",
+                                        label: "à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸œà¸¹à¹‰à¸”à¸¹à¹à¸¥",
                                         uri: `${WEB_API}/userinfo/cuserinfo?auToken=${userData.users_line_id}`
                                     },
 
@@ -1048,7 +1055,7 @@ export const replyUserInfo = async ({
                                     color: "#4477CE",
                                     action: {
                                         type: "uri",
-                                        label: "ตั้งค่าข้อมูลผู้มีภาวะพึ่งพิง",
+                                        label: "à¸•à¸±à¹‰à¸‡à¸„à¹ˆà¸²à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸œà¸¹à¹‰à¸¡à¸µà¸ à¸²à¸§à¸°à¸žà¸¶à¹ˆà¸‡à¸žà¸´à¸‡",
                                         uri: userTakecarepersonData ? `${WEB_API}/userinfo/puserinfo?auToken=${userData.users_line_id}` : `${WEB_API}/elderly_registration?auToken=${userData.users_line_id}`
                                     }
                                 }
@@ -1080,7 +1087,7 @@ export const replyUserData = async ({
             messages: [
                 {
                     type: "flex",
-                    altText: "ลงทะเบียน",
+                    altText: "à¸¥à¸‡à¸—à¸°à¹€à¸šà¸µà¸¢à¸™",
                     contents: {
                         type: "bubble",
                         body: {
@@ -1089,7 +1096,7 @@ export const replyUserData = async ({
                             contents: [
                                 {
                                     type: "text",
-                                    text: "ข้อมูลลงทะเบียน",
+                                    text: "à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸¥à¸‡à¸—à¸°à¹€à¸šà¸µà¸¢à¸™",
                                     color: "#FFB400",
                                     size: "xl",
                                     weight: "bold",
@@ -1097,7 +1104,7 @@ export const replyUserData = async ({
                                 },
                                 {
                                     type: "text",
-                                    text: `คุณ ${profile.displayName}`,
+                                    text: `à¸„à¸¸à¸“ ${profile.displayName}`,
                                     size: "sm",
                                     color: "#555555",
                                     wrap: true,
@@ -1113,17 +1120,17 @@ export const replyUserData = async ({
                                     margin: "xxl",
                                     spacing: "sm",
                                     contents: [
-                                        layoutBoxBaseline("ชื่อ", `${userData.users_fname} ${userData.users_sname}`),
+                                        layoutBoxBaseline("à¸Šà¸·à¹ˆà¸­", `${userData.users_fname} ${userData.users_sname}`),
                                         layoutBoxBaseline("Pin", userData.users_pin.toString()),
-                                        layoutBoxBaseline("สถานะ", userData.users_status_id.status_name),
-                                        layoutBoxBaseline("ที่อยู่", `${userData.users_number || '-'} หมู่ ${userData.users_moo || '-'}`),
-                                        layoutBoxBaseline("ถนน", `${userData.users_road || '-'}`),
-                                        layoutBoxBaseline("ตำบล", `${userData.users_tubon || '-'}`),
-                                        layoutBoxBaseline("อำเภอ", `${userData.users_amphur || '-'}`),
-                                        layoutBoxBaseline("จังหวัด", `${userData.users_province || '-'}`),
-                                        layoutBoxBaseline("รหัสไปรษณีย์", `${userData.users_postcode || '-'}`),
-                                        layoutBoxBaseline("เบอร์โทรศัพท์มือถือ", `${userData.users_tel1 || '-'}`),
-                                        layoutBoxBaseline("เบอร์โทรศัพท์บ้าน", `${userData.users_tel_home || '-'}`),
+                                        layoutBoxBaseline("à¸ªà¸–à¸²à¸™à¸°", userData.users_status_id.status_name),
+                                        layoutBoxBaseline("à¸—à¸µà¹ˆà¸­à¸¢à¸¹à¹ˆ", `${userData.users_number || '-'} à¸«à¸¡à¸¹à¹ˆ ${userData.users_moo || '-'}`),
+                                        layoutBoxBaseline("à¸–à¸™à¸™", `${userData.users_road || '-'}`),
+                                        layoutBoxBaseline("à¸•à¸³à¸šà¸¥", `${userData.users_tubon || '-'}`),
+                                        layoutBoxBaseline("à¸­à¸³à¹€à¸ à¸­", `${userData.users_amphur || '-'}`),
+                                        layoutBoxBaseline("à¸ˆà¸±à¸‡à¸«à¸§à¸±à¸”", `${userData.users_province || '-'}`),
+                                        layoutBoxBaseline("à¸£à¸«à¸±à¸ªà¹„à¸›à¸£à¸©à¸“à¸µà¸¢à¹Œ", `${userData.users_postcode || '-'}`),
+                                        layoutBoxBaseline("à¹€à¸šà¸­à¸£à¹Œà¹‚à¸—à¸£à¸¨à¸±à¸žà¸—à¹Œà¸¡à¸·à¸­à¸–à¸·à¸­", `${userData.users_tel1 || '-'}`),
+                                        layoutBoxBaseline("à¹€à¸šà¸­à¸£à¹Œà¹‚à¸—à¸£à¸¨à¸±à¸žà¸—à¹Œà¸šà¹‰à¸²à¸™", `${userData.users_tel_home || '-'}`),
                                         //layoutBoxBaseline("LINE ID", userData.users_line_id),
                                     ]
 
@@ -1135,7 +1142,7 @@ export const replyUserData = async ({
                                     margin: "xxl",
                                     action: {
                                         type: "uri",
-                                        label: "ลงทะเบียนผู้มีภาวะพึ่งพิง",
+                                        label: "à¸¥à¸‡à¸—à¸°à¹€à¸šà¸µà¸¢à¸™à¸œà¸¹à¹‰à¸¡à¸µà¸ à¸²à¸§à¸°à¸žà¸¶à¹ˆà¸‡à¸žà¸´à¸‡",
                                         uri: `${WEB_API}/elderly_registration?auToken=${userData.users_line_id}`
                                     }
                                 },
@@ -1177,8 +1184,8 @@ export const replyNotification = async ({
                                     contents: [
                                         {
                                             type: "span",
-                                            text: "แจ้งเตือนเขตปลอดภัย",
-                                            color: "#FC0303",
+                                            text: "สถานะเคส",
+                                            color: "#1976D2",
                                             size: "xl",
                                             weight: "bold",
                                             decoration: "none"
@@ -1247,7 +1254,7 @@ export const replyNotificationPostback = async ({
             messages: [
                 {
                     type: "flex",
-                    altText: "แจ้งเตือน",
+                    altText: "à¹à¸ˆà¹‰à¸‡à¹€à¸•à¸·à¸­à¸™",
                     contents: {
                         type: "bubble",
                         body: {
@@ -1261,7 +1268,7 @@ export const replyNotificationPostback = async ({
                                     contents: [
                                         {
                                             type: "span",
-                                            text: "แจ้งเตือนเขตปลอดภัย",
+                                            text: "à¹à¸ˆà¹‰à¸‡à¹€à¸•à¸·à¸­à¸™à¹€à¸‚à¸•à¸›à¸¥à¸­à¸”à¸ à¸±à¸¢",
                                             color: "#FC0303",
                                             size: "xl",
                                             weight: "bold",
@@ -1310,7 +1317,7 @@ export const replyNotificationPostback = async ({
                                     margin: "xxl",
                                     action: {
                                         type: "postback",
-                                        label: "ส่งความช่วยเหลือเพิ่มเติม",
+                                        label: "à¸ªà¹ˆà¸‡à¸„à¸§à¸²à¸¡à¸Šà¹ˆà¸§à¸¢à¹€à¸«à¸¥à¸·à¸­à¹€à¸žà¸´à¹ˆà¸¡à¹€à¸•à¸´à¸¡",
                                         data: `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
@@ -1321,7 +1328,7 @@ export const replyNotificationPostback = async ({
                                             height: 'sm',
                                             action: {
                                                 type: 'uri',
-                                                label: 'ดูแผนที่จากระบบ',
+                                                label: 'à¸”à¸¹à¹à¸œà¸™à¸—à¸µà¹ˆà¸ˆà¸²à¸à¸£à¸°à¸šà¸š',
                                                 //uri: `${WEB_API}/location?auToken=${userData.users_line_id}&idsafezone=${safezoneData.safezone_id}&idlocation=${locationData ? locationData.location_id : ''}`
                                             }
                                         },
@@ -1334,7 +1341,7 @@ export const replyNotificationPostback = async ({
                                     contents: [
                                         {
                                             type: "span",
-                                            text: "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้ที่มีภาวะพึ่งพิง",
+                                            text: "*à¸«à¸¡à¸²à¸¢: à¸‚à¹‰à¸²à¸žà¹€à¸ˆà¹‰à¸²à¸¢à¸´à¸™à¸¢à¸­à¸¡à¹€à¸›à¸´à¸”à¹€à¸œà¸¢à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸•à¸³à¹à¸«à¸™à¹ˆà¸‡à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™à¸‚à¸­à¸‡à¸œà¸¹à¹‰à¸—à¸µà¹ˆà¸¡à¸µà¸ à¸²à¸§à¸°à¸žà¸¶à¹ˆà¸‡à¸žà¸´à¸‡",
                                             color: "#484848",
                                             size: "md",
                                             // decoration: "none",
@@ -1373,7 +1380,7 @@ export const replyNotificationSOS = async ({
             messages: [
                 {
                     type: "flex",
-                    altText: "แจ้งเตือน",
+                    altText: "à¹à¸ˆà¹‰à¸‡à¹€à¸•à¸·à¸­à¸™",
                     contents: {
                         type: "bubble",
                         body: {
@@ -1386,7 +1393,7 @@ export const replyNotificationSOS = async ({
                                     contents: [
                                         {
                                             type: "span",
-                                            text: "แจ้งเตือนฉุกเฉิน",
+                                            text: "à¹à¸ˆà¹‰à¸‡à¹€à¸•à¸·à¸­à¸™à¸‰à¸¸à¸à¹€à¸‰à¸´à¸™",
                                             color: "#FC0303",
                                             size: "xl",
                                             weight: "bold",
@@ -1455,7 +1462,7 @@ export const replyNotificationSendDocQuery = async ({
             messages: [
                 {
                     type: "flex",
-                    altText: "แจ้งเตือน",
+                    altText: "à¹à¸ˆà¹‰à¸‡à¹€à¸•à¸·à¸­à¸™",
                     contents: {
                         type: "bubble",
                         body: {
@@ -1468,7 +1475,7 @@ export const replyNotificationSendDocQuery = async ({
                                     contents: [
                                         {
                                             type: "span",
-                                            text: "แบบสอบถาม",
+                                            text: "à¹à¸šà¸šà¸ªà¸­à¸šà¸–à¸²à¸¡",
                                             color: "#FC0303",
                                             size: "xl",
                                             weight: "bold",
@@ -1495,7 +1502,7 @@ export const replyNotificationSendDocQuery = async ({
                                     contents: [
                                         {
                                             type: "span",
-                                            text: "กรุณาตอบแบบสอบถามเพื่อให้ข้อมูลที่ถูกต้อง",
+                                            text: "à¸à¸£à¸¸à¸“à¸²à¸•à¸­à¸šà¹à¸šà¸šà¸ªà¸­à¸šà¸–à¸²à¸¡à¹€à¸žà¸·à¹ˆà¸­à¹ƒà¸«à¹‰à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸—à¸µà¹ˆà¸–à¸¹à¸à¸•à¹‰à¸­à¸‡",
                                             color: "#555555",
                                             size: "md",
                                             // decoration: "none",
@@ -1517,7 +1524,7 @@ export const replyNotificationSendDocQuery = async ({
                                     margin: "xxl",
                                     action: {
                                         type: "uri",
-                                        label: "ตอบแบบสอบถาม",
+                                        label: "à¸•à¸­à¸šà¹à¸šà¸šà¸ªà¸­à¸šà¸–à¸²à¸¡",
                                         uri: `${WEB_API}/questionnaire?id=${userData.borrow_id}`
                                     }
                                 },
@@ -1548,7 +1555,7 @@ export const replyNotificationPostbackTemp = async ({
             messages: [
                 {
                     type: "flex",
-                    altText: "แจ้งเตือน",
+                    altText: "à¹à¸ˆà¹‰à¸‡à¹€à¸•à¸·à¸­à¸™",
                     contents: {
                         type: "bubble",
                         body: {
@@ -1561,7 +1568,7 @@ export const replyNotificationPostbackTemp = async ({
                                     contents: [
                                         {
                                             type: "span",
-                                            text: "แจ้งอุณหภูมิร่างกายสูง",
+                                            text: "à¹à¸ˆà¹‰à¸‡à¸­à¸¸à¸“à¸«à¸ à¸¹à¸¡à¸´à¸£à¹ˆà¸²à¸‡à¸à¸²à¸¢à¸ªà¸¹à¸‡",
                                             color: "#FC0303",
                                             size: "xl",
                                             weight: "bold",
@@ -1609,7 +1616,7 @@ export const replyNotificationPostbackTemp = async ({
                                     margin: "xxl",
                                     action: {
                                         type: "postback",
-                                        label: "ส่งความช่วยเหลือเพิ่มเติม",
+                                        label: "à¸ªà¹ˆà¸‡à¸„à¸§à¸²à¸¡à¸Šà¹ˆà¸§à¸¢à¹€à¸«à¸¥à¸·à¸­à¹€à¸žà¸´à¹ˆà¸¡à¹€à¸•à¸´à¸¡",
                                         data: `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
@@ -1622,7 +1629,7 @@ export const replyNotificationPostbackTemp = async ({
                                     contents: [
                                         {
                                             type: "span",
-                                            text: "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้ที่มีภาวะพึ่งพิง",
+                                            text: "*à¸«à¸¡à¸²à¸¢: à¸‚à¹‰à¸²à¸žà¹€à¸ˆà¹‰à¸²à¸¢à¸´à¸™à¸¢à¸­à¸¡à¹€à¸›à¸´à¸”à¹€à¸œà¸¢à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸•à¸³à¹à¸«à¸™à¹ˆà¸‡à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™à¸‚à¸­à¸‡à¸œà¸¹à¹‰à¸—à¸µà¹ˆà¸¡à¸µà¸ à¸²à¸§à¸°à¸žà¸¶à¹ˆà¸‡à¸žà¸´à¸‡",
                                             color: "#FC0303",
                                             size: "md",
                                             // decoration: "none",
@@ -1663,7 +1670,7 @@ export const replyNotificationPostbackfall = async ({
             messages: [
                 {
                     type: "flex",
-                    altText: "แจ้งเตือน",
+                    altText: "à¹à¸ˆà¹‰à¸‡à¹€à¸•à¸·à¸­à¸™",
                     contents: {
                         type: "bubble",
                         body: {
@@ -1676,7 +1683,7 @@ export const replyNotificationPostbackfall = async ({
                                     contents: [
                                         {
                                             type: "span",
-                                            text: "แจ้งเตือนการล้ม",
+                                            text: "à¹à¸ˆà¹‰à¸‡à¹€à¸•à¸·à¸­à¸™à¸à¸²à¸£à¸¥à¹‰à¸¡",
                                             color: "#FC0303",
                                             size: "xl",
                                             weight: "bold",
@@ -1724,7 +1731,7 @@ export const replyNotificationPostbackfall = async ({
                                     margin: "xxl",
                                     action: {
                                         type: "postback",
-                                        label: "ส่งความช่วยเหลือเพิ่มเติม",
+                                        label: "à¸ªà¹ˆà¸‡à¸„à¸§à¸²à¸¡à¸Šà¹ˆà¸§à¸¢à¹€à¸«à¸¥à¸·à¸­à¹€à¸žà¸´à¹ˆà¸¡à¹€à¸•à¸´à¸¡",
                                         data: `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
@@ -1737,7 +1744,7 @@ export const replyNotificationPostbackfall = async ({
                                     contents: [
                                         {
                                             type: "span",
-                                            text: "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้ที่มีภาวะพึ่งพิง",
+                                            text: "*à¸«à¸¡à¸²à¸¢: à¸‚à¹‰à¸²à¸žà¹€à¸ˆà¹‰à¸²à¸¢à¸´à¸™à¸¢à¸­à¸¡à¹€à¸›à¸´à¸”à¹€à¸œà¸¢à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸•à¸³à¹à¸«à¸™à¹ˆà¸‡à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™à¸‚à¸­à¸‡à¸œà¸¹à¹‰à¸—à¸µà¹ˆà¸¡à¸µà¸ à¸²à¸§à¸°à¸žà¸¶à¹ˆà¸‡à¸žà¸´à¸‡",
                                             color: "#FC0303",
                                             size: "md",
                                             // decoration: "none",
@@ -1779,7 +1786,7 @@ export const replyNotificationPostbackHeart = async ({
             messages: [
                 {
                     type: "flex",
-                    altText: "แจ้งเตือน",
+                    altText: "à¹à¸ˆà¹‰à¸‡à¹€à¸•à¸·à¸­à¸™",
                     contents: {
                         type: "bubble",
                         body: {
@@ -1792,7 +1799,7 @@ export const replyNotificationPostbackHeart = async ({
                                     contents: [
                                         {
                                             type: "span",
-                                            text: "แจ้งเตือนชีพจร",
+                                            text: "à¹à¸ˆà¹‰à¸‡à¹€à¸•à¸·à¸­à¸™à¸Šà¸µà¸žà¸ˆà¸£",
                                             color: "#FC0303",
                                             size: "xl",
                                             weight: "bold",
@@ -1840,7 +1847,7 @@ export const replyNotificationPostbackHeart = async ({
                                     margin: "xxl",
                                     action: {
                                         type: "postback",
-                                        label: "ส่งความช่วยเหลือเพิ่มเติม",
+                                        label: "à¸ªà¹ˆà¸‡à¸„à¸§à¸²à¸¡à¸Šà¹ˆà¸§à¸¢à¹€à¸«à¸¥à¸·à¸­à¹€à¸žà¸´à¹ˆà¸¡à¹€à¸•à¸´à¸¡",
                                         data: `userLineId=${replyToken}&takecarepersonId=${takecarepersonId}&type=${type}`,
                                     }
                                 },
@@ -1853,7 +1860,7 @@ export const replyNotificationPostbackHeart = async ({
                                     contents: [
                                         {
                                             type: "span",
-                                            text: "*หมาย: ข้าพเจ้ายินยอมเปิดเผยข้อมูลตำแหน่งปัจจุบันของผู้ที่มีภาวะพึ่งพิง",
+                                            text: "*à¸«à¸¡à¸²à¸¢: à¸‚à¹‰à¸²à¸žà¹€à¸ˆà¹‰à¸²à¸¢à¸´à¸™à¸¢à¸­à¸¡à¹€à¸›à¸´à¸”à¹€à¸œà¸¢à¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸•à¸³à¹à¸«à¸™à¹ˆà¸‡à¸›à¸±à¸ˆà¸ˆà¸¸à¸šà¸±à¸™à¸‚à¸­à¸‡à¸œà¸¹à¹‰à¸—à¸µà¹ˆà¸¡à¸µà¸ à¸²à¸§à¸°à¸žà¸¶à¹ˆà¸‡à¸žà¸´à¸‡",
                                             color: "#FC0303",
                                             size: "md",
                                             // decoration: "none",
@@ -1906,3 +1913,4 @@ export const pushFlexMessage = async ({
         }
     }
 }
+
