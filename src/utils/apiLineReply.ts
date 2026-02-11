@@ -221,7 +221,7 @@ export const getFlexTemplate = (
         contents.push({
             type: 'button',
             style: 'primary',
-            height: 'xl',
+            height: 'sm',
             margin: 'xxl',
             action: {
                 type: 'postback',
