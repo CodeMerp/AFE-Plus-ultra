@@ -231,7 +231,7 @@ const getRedAlertTemplate = ({
             lineSpacing: '5px',
             margin: 'md',
             text: CONSENT_NOTE_TEXT,
-            color: '#484848',
+            color: '#ff0000',
             size: 'md',
         });
     }
