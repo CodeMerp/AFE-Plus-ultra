@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import prisma from '@/lib/prisma';
 import _ from 'lodash';
-import { replyNotificationPostbackHeart } from '@/utils/apiLineReply'; 
+import { replyNotificationPostbackHeart } from '@/utils/apiLineReply';
 import moment from 'moment';
 
 type Data = {
@@ -48,7 +48,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 }
             });
 
-            // เปรียบเทียบค่า HR กับที่ตั้งไว้
+            // เปรียบเทียบค่า HR กับที่ตั้งไว้ (เช็คแค่ max_bpm)
             const bpmValue = Number(body.bpm);
             let calculatedStatus = Number(body.status);
 
@@ -61,36 +61,32 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
 
             const status = calculatedStatus;
 
-            // ดึงข้อมูล last heart rate record
+            // ดึงข้อมูล record ล่าสุด
             const lastHR = await prisma.heartrate_records.findFirst({
                 where: {
                     users_id: user.users_id,
                     takecare_id: takecareperson.takecare_id
                 },
                 orderBy: {
-                    noti_time: 'desc'
+                    heartrate_id: 'desc'
                 }
             });
 
-            // เพิ่มการคำนวณเวลาที่ผ่านมานับจากการแจ้งเตือนล่าสุด
-            const minutesSinceLastNoti = lastHR?.noti_time
-                ? moment().diff(moment(lastHR.noti_time), 'minutes')
-                : null;
+            // ตรวจสอบว่าควรส่ง notification หรือไม่
+            let shouldSendNotification = false;
+            if (status === 1) {
+                // กรณีไม่มี record เก่า หรือ status เก่าไม่ผิดปกติ -> ส่งได้เลย
+                if (!lastHR || lastHR.noti_status !== 1) {
+                    shouldSendNotification = true;
+                } 
+                // กรณี status เก่าผิดปกติ -> เช็คว่าผ่านมา 5 นาทีหรือยัง
+                else if (lastHR.noti_time && moment().diff(moment(lastHR.noti_time), 'minutes') >= 5) {
+                    shouldSendNotification = true;
+                }
+            }
 
-            // Keep previous notification state by default
-            let noti_time: Date | null = lastHR?.noti_time ?? null;
-            let noti_status: number | null = lastHR?.noti_status ?? 0;
-
-            // เงื่อนไขการส่งการแจ้งเตือน
-            const shouldNotify =
-                status === 1 && (
-                    !lastHR ||
-                    lastHR.noti_status !== 1 ||
-                    !lastHR.noti_time ||
-                    (minutesSinceLastNoti !== null && minutesSinceLastNoti >= 5)
-                );
-
-            if (shouldNotify) {
+            // ส่ง notification ถ้าจำเป็น
+            if (shouldSendNotification) {
                 const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname}\nชีพจรเกินค่าที่กำหนด: ${bpmValue} bpm`;
 
                 const replyToken = user.users_line_id || '';
@@ -103,46 +99,54 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                         message
                     });
                 }
-
-                noti_status = 1;
-                noti_time = new Date();
-                console.log('Heartrate notification sent');
-            } else if (status === 1) {
-                console.log(`Skip heartrate notification: still in cooldown (${minutesSinceLastNoti ?? 0} minute(s))`);
             }
 
-            if (status === 0) {
-                noti_status = 0;
-                noti_time = null;
-                console.log("อัตราการเต้นของหัวใจอยู่ในระดับปกติ");
-            }
+            // เตรียมข้อมูลสำหรับ update/create
+            const recordData: any = {
+                bpm: bpmValue,
+                record_date: new Date(),
+                status: status
+            };
 
-            // บันทึกหรืออัพเดทข้อมูล
+            // อัพเดท noti_time และ noti_status เฉพาะตอนที่ส่ง notification
+            if (shouldSendNotification) {
+                recordData.noti_time = new Date();
+                recordData.noti_status = 1;
+            } else if (status === 0) {
+                // ถ้ากลับมาปกติ ให้รีเซ็ต noti_status
+                recordData.noti_status = 0;
+                recordData.noti_time = null;
+            }
+            // ถ้า status = 1 แต่ไม่ถึงเวลาส่ง notification -> ไม่แก้ noti_time/noti_status
+
+            // บันทึกข้อมูล
             if (lastHR) {
+                const updateData: any = { ...recordData };
+                
+                // ถ้าไม่ควรส่ง notification และ status ยังเป็น 1 -> เก็บค่า noti_time/noti_status เดิมไว้
+                if (!shouldSendNotification && status === 1) {
+                    delete updateData.noti_time;
+                    delete updateData.noti_status;
+                }
+
                 await prisma.heartrate_records.update({
                     where: {
                         heartrate_id: lastHR.heartrate_id
                     },
-                    data: {
-                        bpm: bpmValue,
-                        record_date: new Date(),
-                        status: status,
-                        noti_time: noti_time,
-                        noti_status: noti_status
-                    }
+                    data: updateData
                 });
             } else {
                 await prisma.heartrate_records.create({
                     data: {
                         users_id: user.users_id,
                         takecare_id: takecareperson.takecare_id,
-                        bpm: bpmValue,
-                        record_date: new Date(),
-                        status: status,
-                        noti_time: noti_time,
-                        noti_status: noti_status
+                        ...recordData
                     }
                 });
+            }
+
+            if (status === 0) {
+                console.log("อัตราการเต้นของหัวใจอยู่ในระดับปกติ");
             }
 
             return res.status(200).json({ message: 'success', data: 'บันทึกข้อมูลเรียบร้อย' });
