@@ -239,7 +239,7 @@ export const getFlexTemplate = (
                 action: {
                     type: 'uri',
                     label: 'ดูแผนที่จากระบบ',
-                    uri: `${WEB_API}/location?lat=${latitude}&lng=${longitude}`
+                    // uri: `${WEB_API}/location?auToken=${userData.users_line_id}&idsafezone=${safezoneData.safezone_id}&idlocation=${locationData ? locationData.location_id : ''}`
                 },
             },
             {
