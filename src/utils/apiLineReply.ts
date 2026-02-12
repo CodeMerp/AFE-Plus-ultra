@@ -1201,22 +1201,18 @@ export const replyNotification = async ({
                             layout: "vertical",
                             contents: [
                                 {
-                                    type: "text",
-                                    text: " ",
+                                    type: "box",
+                                    layout: "vertical",
+                                    backgroundColor: "#1976D2",
+                                    paddingAll: "10px",
                                     contents: [
                                         {
-                                            type: "span",
+                                            type: "text",
                                             text: "สถานะเคส",
-                                            color: "#1976D2",
-                                            size: "xl",
+                                            color: "#FFFFFF",
+                                            size: "md",
                                             weight: "bold",
-                                            decoration: "none"
-                                        },
-                                        {
-                                            type: "span",
-                                            text: " ",
-                                            size: "xxl",
-                                            decoration: "none"
+                                            wrap: true
                                         }
                                     ]
                                 },
@@ -1283,22 +1279,18 @@ export const replyNotificationPostback = async ({
                             layout: "vertical",
                             contents: [
                                 {
-                                    type: "text",
-                                    text: " ",
+                                    type: "box",
+                                    layout: "vertical",
+                                    backgroundColor: "#1976D2",
+                                    paddingAll: "10px",
                                     contents: [
                                         {
-                                            type: "span",
+                                            type: "text",
                                             text: "สถานะเคส",
-                                            color: "#1976D2",
-                                            size: "xl",
+                                            color: "#FFFFFF",
+                                            size: "md",
                                             weight: "bold",
-                                            decoration: "none"
-                                        },
-                                        {
-                                            type: "span",
-                                            text: " ",
-                                            size: "xxl",
-                                            decoration: "none"
+                                            wrap: true
                                         }
                                     ]
                                 },
