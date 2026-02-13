@@ -35,11 +35,9 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
                 where: {
                     takecare_id           : Number(takecareId),
                     user_id               : Number(usersId),
-                    exted_closed_date     : null,
-                },
-                orderBy: {
-                    exten_date: 'desc',
-                },
+                    exten_received_user_id: null,
+                    exten_received_date   : null,
+                }
             })
             return res.status(200).json({ message: 'success', data: extendedhelp })
         } catch (error) {
