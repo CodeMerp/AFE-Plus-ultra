@@ -102,6 +102,7 @@ const executeEscalation = async ({
         }
 
         const { resUser, resTakecareperson, resSafezone, responseLocation } = prepared;
+
         const extendedHelpId = await api.saveExtendedHelp({
             takecareId: resTakecareperson.takecare_id,
             usersId: resUser.users_id,
@@ -176,49 +177,49 @@ export const postbackAccept = async (data: any) => {
             await replyNoti({
                 replyToken: data.groupId,
                 userIdAccept: data.userIdAccept,
-                message: "à¹„à¸¡à¹ˆà¸žà¸šà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸‚à¸­à¸‡à¸„à¸¸à¸“à¹„à¸¡à¹ˆà¸ªà¸²à¸¡à¸²à¸£à¸–à¸£à¸±à¸šà¹€à¸„à¸ªà¹„à¸”à¹‰",
+                message: "ไม่พบข้อมูลของคุณ ไม่สามารถรับเคสได้",
             });
             return null;
-        } else {
-            const resExtendedHelp = await api.getExtendedHelpById(data.extenId);
-            if (resExtendedHelp) {
-                if (
-                    resExtendedHelp.exten_received_date &&
-                    resExtendedHelp.exten_received_user_id
-                ) {
-                    await replyNoti({
-                        replyToken: data.groupId,
-                        userIdAccept: data.userIdAccept,
-                        title: "à¸ªà¸–à¸²à¸™à¸°à¹€à¸„à¸ª",
-                        titleColor: "#1976D2",
-                        message: "à¸¡à¸µà¸œà¸¹à¹‰à¸£à¸±à¸šà¹€à¸„à¸ªà¸Šà¹ˆà¸§à¸¢à¹€à¸«à¸¥à¸·à¸­à¹à¸¥à¹‰à¸§",
-                    });
-                    return null;
-                } else {
-                    await api.updateExtendedHelp({
-                        extenId: data.extenId,
-                        typeStatus: "received",
-                        extenReceivedUserId: resUser.users_id,
-                    });
-                    await replyNoti({
-                        replyToken: data.groupId,
-                        userIdAccept: data.userIdAccept,
-                        title: "à¸ªà¸–à¸²à¸™à¸°à¹€à¸„à¸ª",
-                        titleColor: "#1976D2",
-                        message: "à¸£à¸±à¸šà¹€à¸„à¸ªà¸Šà¹ˆà¸§à¸¢à¹€à¸«à¸¥à¸·à¸­à¹à¸¥à¹‰à¸§",
-                        buttons: [
-                            {
-                                type: 'postback',
-                                label: 'à¸›à¸´à¸”à¹€à¸„à¸ªà¸Šà¹ˆà¸§à¸¢à¹€à¸«à¸¥à¸·à¸­',
-                                data: `type=close&takecareId=${data.takecareId}&extenId=${data.extenId}&userLineId=${data.userLineId}`,
-                            },
-                        ],
-                    });
-                    return data.userLineId;
-                }
-            }
         }
-        return null;
+
+        const resExtendedHelp = await api.getExtendedHelpById(data.extenId);
+        if (!resExtendedHelp) {
+            return null;
+        }
+
+        if (resExtendedHelp.exten_received_date && resExtendedHelp.exten_received_user_id) {
+            await replyNoti({
+                replyToken: data.groupId,
+                userIdAccept: data.userIdAccept,
+                title: "สถานะเคส",
+                titleColor: "#1976D2",
+                message: "มีผู้รับเคสช่วยเหลือแล้ว",
+            });
+            return null;
+        }
+
+        await api.updateExtendedHelp({
+            extenId: data.extenId,
+            typeStatus: "received",
+            extenReceivedUserId: resUser.users_id,
+        });
+
+        await replyNoti({
+            replyToken: data.groupId,
+            userIdAccept: data.userIdAccept,
+            title: "สถานะเคส",
+            titleColor: "#1976D2",
+            message: "รับเคสช่วยเหลือแล้ว",
+            buttons: [
+                {
+                    type: "postback",
+                    label: "ปิดเคสช่วยเหลือ",
+                    data: `type=close&takecareId=${data.takecareId}&extenId=${data.extenId}&userLineId=${data.userLineId}`,
+                },
+            ],
+        });
+
+        return data.userLineId;
     } catch (error) {
         return error;
     }
@@ -231,56 +232,52 @@ export const postbackClose = async (data: any) => {
             await replyNoti({
                 replyToken: data.groupId,
                 userIdAccept: data.userIdAccept,
-                message: "à¹„à¸¡à¹ˆà¸žà¸šà¸‚à¹‰à¸­à¸¡à¸¹à¸¥à¸‚à¸­à¸‡à¸„à¸¸à¸“à¹„à¸¡à¹ˆà¸ªà¸²à¸¡à¸²à¸£à¸–à¸›à¸´à¸”à¹€à¸„à¸ªà¹„à¸”à¹‰",
+                message: "ไม่พบข้อมูลของคุณ ไม่สามารถปิดเคสได้",
             });
             return null;
-        } else {
-            const resExtendedHelp = await api.getExtendedHelpById(data.extenId);
-            if (resExtendedHelp) {
-                if (
-                    resExtendedHelp.exted_closed_date &&
-                    resExtendedHelp.exten_closed_user_id
-                ) {
-                    await replyNoti({
-                        replyToken: data.groupId,
-                        userIdAccept: data.userIdAccept,
-                        title: "à¸ªà¸–à¸²à¸™à¸°à¹€à¸„à¸ª",
-                        titleColor: "#1976D2",
-                        message: "à¸¡à¸µà¸œà¸¹à¹‰à¸›à¸´à¸”à¹€à¸„à¸ªà¸Šà¹ˆà¸§à¸¢à¹€à¸«à¸¥à¸·à¸­à¹à¸¥à¹‰à¸§",
-                    });
-                    return null;
-                }
-                if (
-                    !resExtendedHelp.exten_received_date &&
-                    !resExtendedHelp.exten_received_user_id
-                ) {
-                    await replyNoti({
-                        replyToken: data.groupId,
-                        userIdAccept: data.userIdAccept,
-                        message:
-                            "à¹„à¸¡à¹ˆà¸ªà¸²à¸¡à¸²à¸£à¸–à¸›à¸´à¸”à¹€à¸„à¸ªà¹„à¸”à¹‰ à¹€à¸™à¸·à¹ˆà¸­à¸‡à¸ˆà¸²à¸à¸¢à¸±à¸‡à¹„à¸¡à¹ˆà¹„à¸”à¹‰à¸•à¸­à¸šà¸£à¸±à¸šà¸à¸²à¸£à¸Šà¹ˆà¸§à¸¢à¹€à¸«à¸¥à¸·à¸­",
-                    });
-                    return null;
-                } else {
-                    await api.updateExtendedHelp({
-                        extenId: data.extenId,
-                        typeStatus: "close",
-                        extenClosedUserId: resUser.users_id,
-                    });
-                    await replyNoti({
-                        replyToken: data.groupId,
-                        userIdAccept: data.userIdAccept,
-                        title: "à¸ªà¸–à¸²à¸™à¸°à¹€à¸„à¸ª",
-                        titleColor: "#1976D2",
-                        message: "à¸›à¸´à¸”à¹€à¸„à¸ªà¸Šà¹ˆà¸§à¸¢à¹€à¸«à¸¥à¸·à¸­à¹à¸¥à¹‰à¸§",
-                    });
-                    return data.userLineId;
-                }
-            }
         }
-        return null;
+
+        const resExtendedHelp = await api.getExtendedHelpById(data.extenId);
+        if (!resExtendedHelp) {
+            return null;
+        }
+
+        if (resExtendedHelp.exted_closed_date && resExtendedHelp.exten_closed_user_id) {
+            await replyNoti({
+                replyToken: data.groupId,
+                userIdAccept: data.userIdAccept,
+                title: "สถานะเคส",
+                titleColor: "#1976D2",
+                message: "มีผู้ปิดเคสช่วยเหลือแล้ว",
+            });
+            return null;
+        }
+
+        if (!resExtendedHelp.exten_received_date && !resExtendedHelp.exten_received_user_id) {
+            await replyNoti({
+                replyToken: data.groupId,
+                userIdAccept: data.userIdAccept,
+                message: "ไม่สามารถปิดเคสได้ เนื่องจากยังไม่ได้ตอบรับการช่วยเหลือ",
+            });
+            return null;
+        }
+
+        await api.updateExtendedHelp({
+            extenId: data.extenId,
+            typeStatus: "close",
+            extenClosedUserId: resUser.users_id,
+        });
+
+        await replyNoti({
+            replyToken: data.groupId,
+            userIdAccept: data.userIdAccept,
+            title: "สถานะเคส",
+            titleColor: "#1976D2",
+            message: "ปิดเคสช่วยเหลือแล้ว",
+        });
+
+        return data.userLineId;
     } catch (error) {
         return error;
     }
 };
-
