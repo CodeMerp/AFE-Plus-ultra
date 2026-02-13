@@ -25,9 +25,244 @@ const getLocation = async (
   }
 };
 
-// --- (ฟังก์ชัน postbackHeartRate, postbackFall, postbackTemp ปล่อยไว้เหมือนเดิม หรือแก้ตาม Logic เดียวกันถ้าต้องการ) ---
-// เพื่อความกระชับ ผมจะขอแสดงเฉพาะ postbackSafezone ที่เป็นหัวใจหลักของการแก้ไขนี้ครับ
-// ส่วน HeartRate, Fall, Temp สามารถใช้ Logic แบบเดียวกับ Safezone ด้านล่างได้เลย
+// ฟังก์ชันสำหรับเช็คสถานะก่อนเริ่มทำงาน (ใช้ร่วมกันทุกฟังก์ชันเพื่อลด code ซ้ำ)
+const checkCaseStatus = async (extenId?: number) => {
+  if (!extenId) return null; // ถ้าไม่มี ID ส่งมา ให้ข้ามไปเช็คแบบปกติ
+
+  const currentCase = await api.getExtendedHelpById(extenId);
+  if (currentCase) {
+    // 1. ปิดเคสไปแล้ว
+    if (currentCase.exted_closed_date) {
+      return "case_closed";
+    }
+    // 2. มีคนรับงานแล้ว
+    if (currentCase.exten_received_date || currentCase.exten_received_user_id) {
+      return "case_received";
+    }
+    // 3. ยังไม่ปิดและยังไม่รับ (รออยู่) -> ห้ามกดซ้ำ
+    return "already_sent";
+  }
+  return null;
+};
+
+export const postbackHeartRate = async ({
+  userLineId,
+  takecarepersonId,
+  extenId,
+}: PostbackSafezoneProps) => {
+  try {
+    // 1. เช็คสถานะจากปุ่ม (ถ้ามี extenId)
+    const statusCheck = await checkCaseStatus(extenId);
+    if (statusCheck) return statusCheck;
+
+    const resUser = await api.getUser(userLineId);
+    const resTakecareperson = await api.getTakecareperson(
+      takecarepersonId.toString()
+    );
+
+    if (resUser && resTakecareperson) {
+      const resSafezone = await api.getSafezone(
+        resTakecareperson.takecare_id,
+        resUser.users_id
+      );
+      if (resSafezone) {
+        const resExtendedHelp = await api.getExtendedHelp(
+          resTakecareperson.takecare_id,
+          resUser.users_id
+        );
+
+        if (resExtendedHelp && !resExtendedHelp.exted_closed_date) {
+           if (resExtendedHelp.exten_received_date || resExtendedHelp.exten_received_user_id) {
+             return "case_received";
+           }
+          console.log(`Heart rate case still open. exten_id: ${resExtendedHelp.exten_id}`);
+          return "already_sent";
+        }
+
+        let extendedHelpId = null;
+        const data = {
+          takecareId: resTakecareperson.takecare_id,
+          usersId: resUser.users_id,
+          typeStatus: "save",
+          safezLatitude: resSafezone.safez_latitude,
+          safezLongitude: resSafezone.safez_longitude,
+        };
+        const resNewId = await api.saveExtendedHelp(data);
+        extendedHelpId = resNewId;
+
+        const responseLocation = await getLocation(
+          resTakecareperson.takecare_id,
+          resUser.users_id,
+          resSafezone.safezone_id
+        );
+
+        await replyNotification({
+          resUser,
+          resTakecareperson,
+          resSafezone,
+          extendedHelpId,
+          locationData: responseLocation,
+        });
+
+        return resUser.users_line_id;
+      } else {
+        console.log(`NO SAFEZONE FOUND for takecare_id: ${resTakecareperson.takecare_id}, users_id: ${resUser.users_id}`);
+      }
+    } else {
+      console.log(`USER or TAKECAREPERSON NOT FOUND.`);
+    }
+    return null;
+  } catch (error) {
+    console.log("🚨 ~ postbackHeartRate ~ error:", error);
+    return null;
+  }
+};
+
+export const postbackFall = async ({
+  userLineId,
+  takecarepersonId,
+  extenId,
+}: PostbackSafezoneProps) => {
+  try {
+    // 1. เช็คสถานะจากปุ่ม (ถ้ามี extenId)
+    const statusCheck = await checkCaseStatus(extenId);
+    if (statusCheck) return statusCheck;
+
+    const resUser = await api.getUser(userLineId);
+    const resTakecareperson = await api.getTakecareperson(
+      takecarepersonId.toString()
+    );
+
+    if (resUser && resTakecareperson) {
+      const resSafezone = await api.getSafezone(
+        resTakecareperson.takecare_id,
+        resUser.users_id
+      );
+      if (resSafezone) {
+        const resExtendedHelp = await api.getExtendedHelp(
+          resTakecareperson.takecare_id,
+          resUser.users_id
+        );
+
+        if (resExtendedHelp && !resExtendedHelp.exted_closed_date) {
+           if (resExtendedHelp.exten_received_date || resExtendedHelp.exten_received_user_id) {
+             return "case_received";
+           }
+          console.log(`Fall case still open. exten_id: ${resExtendedHelp.exten_id}`);
+          return "already_sent";
+        }
+
+        let extendedHelpId = null;
+        const data = {
+          takecareId: resTakecareperson.takecare_id,
+          usersId: resUser.users_id,
+          typeStatus: "save",
+          safezLatitude: resSafezone.safez_latitude,
+          safezLongitude: resSafezone.safez_longitude,
+        };
+        const resNewId = await api.saveExtendedHelp(data);
+        extendedHelpId = resNewId;
+
+        const responseLocation = await getLocation(
+          resTakecareperson.takecare_id,
+          resUser.users_id,
+          resSafezone.safezone_id
+        );
+
+        await replyNotification({
+          resUser,
+          resTakecareperson,
+          resSafezone,
+          extendedHelpId,
+          locationData: responseLocation,
+        });
+
+        return resUser.users_line_id;
+      } else {
+        console.log(`NO SAFEZONE FOUND for takecare_id: ${resTakecareperson.takecare_id}, users_id: ${resUser.users_id}`);
+      }
+    } else {
+      console.log(`USER or TAKECAREPERSON NOT FOUND.`);
+    }
+    return null;
+  } catch (error) {
+    console.log("🚨 ~ postbackFall ~ error:", error);
+    return null;
+  }
+};
+
+export const postbackTemp = async ({
+  userLineId,
+  takecarepersonId,
+  extenId,
+}: PostbackSafezoneProps) => {
+  try {
+    // 1. เช็คสถานะจากปุ่ม (ถ้ามี extenId)
+    const statusCheck = await checkCaseStatus(extenId);
+    if (statusCheck) return statusCheck;
+
+    const resUser = await api.getUser(userLineId);
+    const resTakecareperson = await api.getTakecareperson(
+      takecarepersonId.toString()
+    );
+
+    if (resUser && resTakecareperson) {
+      const resSafezone = await api.getSafezone(
+        resTakecareperson.takecare_id,
+        resUser.users_id
+      );
+      if (resSafezone) {
+        const resExtendedHelp = await api.getExtendedHelp(
+          resTakecareperson.takecare_id,
+          resUser.users_id
+        );
+
+        if (resExtendedHelp && !resExtendedHelp.exted_closed_date) {
+           if (resExtendedHelp.exten_received_date || resExtendedHelp.exten_received_user_id) {
+             return "case_received";
+           }
+          console.log(`Temperature case still open. exten_id: ${resExtendedHelp.exten_id}`);
+          return "already_sent";
+        }
+
+        let extendedHelpId = null;
+        const data = {
+          takecareId: resTakecareperson.takecare_id,
+          usersId: resUser.users_id,
+          typeStatus: "save",
+          safezLatitude: resSafezone.safez_latitude,
+          safezLongitude: resSafezone.safez_longitude,
+        };
+        const resNewId = await api.saveExtendedHelp(data);
+        extendedHelpId = resNewId;
+
+        const responseLocation = await getLocation(
+          resTakecareperson.takecare_id,
+          resUser.users_id,
+          resSafezone.safezone_id
+        );
+
+        await replyNotification({
+          resUser,
+          resTakecareperson,
+          resSafezone,
+          extendedHelpId,
+          locationData: responseLocation,
+        });
+
+        return resUser.users_line_id;
+      } else {
+        console.log(`NO SAFEZONE FOUND for takecare_id: ${resTakecareperson.takecare_id}, users_id: ${resUser.users_id}`);
+      }
+    } else {
+      console.log(`USER or TAKECAREPERSON NOT FOUND.`);
+    }
+    return null;
+  } catch (error) {
+    console.log("🚨 ~ postbackTemp ~ error:", error);
+    return null;
+  }
+};
 
 export const postbackSafezone = async ({
   userLineId,
@@ -35,60 +270,34 @@ export const postbackSafezone = async ({
   extenId,
 }: PostbackSafezoneProps) => {
   try {
+    // 1. เช็คสถานะจากปุ่ม (ถ้ามี extenId)
+    const statusCheck = await checkCaseStatus(extenId);
+    if (statusCheck) return statusCheck;
+
     const resUser = await api.getUser(userLineId);
     const resTakecareperson = await api.getTakecareperson(
       takecarepersonId.toString()
     );
 
     if (resUser && resTakecareperson) {
-      
-      // 1. ตรวจสอบกรณีมีการส่ง extenId มา (กดจากปุ่ม Flex Message เดิม)
-      if (extenId) {
-        const currentCase = await api.getExtendedHelpById(extenId);
-        if (currentCase) {
-          // ถ้าเคสถูกปิดไปแล้ว -> ห้ามกดซ้ำ
-          if (currentCase.exted_closed_date) {
-            return "case_closed";
-          }
-          // ถ้ามีคนรับเคสแล้ว -> ห้ามกดซ้ำ
-          if (currentCase.exten_received_date || currentCase.exten_received_user_id) {
-            return "case_received";
-          }
-          // ถ้าเคสยังเปิดอยู่และยังไม่ได้รับ (กำลังรอ) -> ห้ามกดซ้ำ
-          return "already_sent";
-        }
-      }
-
-      // 2. ตรวจสอบกรณีทั่วไป (กดจากเมนู หรือไม่มี extenId)
-      // เช็คว่ามีเคสค้างอยู่ในระบบหรือไม่
       const resSafezone = await api.getSafezone(
         resTakecareperson.takecare_id,
         resUser.users_id
       );
-
       if (resSafezone) {
         const resExtendedHelp = await api.getExtendedHelp(
           resTakecareperson.takecare_id,
           resUser.users_id
         );
 
-        // เช็คว่ามีเคสที่ยังไม่ปิดอยู่
-        if (
-          resExtendedHelp &&
-          !resExtendedHelp.exted_closed_date
-        ) {
-           // ถ้ามีคนรับไปแล้ว (แต่ยังไม่ปิด)
+        if (resExtendedHelp && !resExtendedHelp.exted_closed_date) {
            if (resExtendedHelp.exten_received_date || resExtendedHelp.exten_received_user_id) {
              return "case_received";
            }
-           
-           console.log(
-            `Safezone case still open. exten_id: ${resExtendedHelp.exten_id}`
-          );
+          console.log(`Safezone case still open. exten_id: ${resExtendedHelp.exten_id}`);
           return "already_sent";
         }
 
-        // 3. สร้างเคสใหม่ (เมื่อไม่มีเคสค้าง หรือเคสเก่าปิดไปแล้ว)
         let extendedHelpId = null;
         const data = {
           takecareId: resTakecareperson.takecare_id,
@@ -106,8 +315,6 @@ export const postbackSafezone = async ({
           resSafezone.safezone_id
         );
 
-        // *** สำคัญ: ในฟังก์ชัน replyNotification ต้องแน่ใจว่าปุ่มที่สร้างขึ้น
-        // มีการแนบ data: `...&extenId=${extendedHelpId}` ไปด้วย
         await replyNotification({
           resUser,
           resTakecareperson,
@@ -115,18 +322,12 @@ export const postbackSafezone = async ({
           extendedHelpId,
           locationData: responeLocation,
         });
-        
-        // ส่ง Line ID กลับเพื่อบอกว่าสำเร็จ
         return resUser.users_line_id;
       } else {
-        console.log(
-          `NO SAFEZONE FOUND for takecare_id: ${resTakecareperson.takecare_id}, users_id: ${resUser.users_id}`
-        );
+        console.log(`NO SAFEZONE FOUND for takecare_id: ${resTakecareperson.takecare_id}, users_id: ${resUser.users_id}`);
       }
     } else {
-      console.log(
-        `USER or TAKECAREPERSON NOT FOUND. userLineId: ${userLineId}, takecarepersonId: ${takecarepersonId}`
-      );
+      console.log(`USER or TAKECAREPERSON NOT FOUND. userLineId: ${userLineId}, takecarepersonId: ${takecarepersonId}`);
     }
     return null;
   } catch (error) {
@@ -134,8 +335,6 @@ export const postbackSafezone = async ({
     return null;
   }
 };
-
-// --- ฟังก์ชันอื่นๆ (Accept, Close) คงเดิมตามที่คุณมี ---
 
 export const postbackAccept = async (data: any) => {
   try {
