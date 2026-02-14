@@ -425,7 +425,7 @@ export const postbackAccept = async (data: any) => {
                                   buttons: [
                                       {
                                           type: "postback",
-                                          label: "ปิดเคสทางหน้าเว็บ",
+                                          label: "ปิดเคสอัตโนมัติ",
                                           data: closeCasePostbackDataAuto,
                                       },
                                       {
@@ -526,7 +526,7 @@ export const postbackClose = async (data: any) => {
                 replyToken: data.groupId,
                 userIdAccept: data.userIdAccept,
                 title: "สถานะเคส",
-                titleColor: "#2CD435",
+                titleColor: "#1976D2",
                 message: "ปิดเคสขอความช่วยเหลือด้วยตนเองแล้ว",
             });
             console.log(`✅ Case ${data.extenId} closed manually by user: ${resUser.users_id}`);
@@ -536,8 +536,8 @@ export const postbackClose = async (data: any) => {
                 replyToken: data.groupId,
                 userIdAccept: data.userIdAccept,
                 title: "สถานะเคส",
-                titleColor: "#2CD435",
-                message: "ปิดเคสขอความช่วยเหลือทางหน้าเว็บแล้ว",
+                titleColor: "#1976D2",
+                message: "ปิดเคสขอความช่วยเหลืออัตโนมัติแล้ว",
             });
             console.log(`✅ Case ${data.extenId} closed via web by user: ${resUser.users_id}`);
         } else {
