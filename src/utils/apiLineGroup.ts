@@ -26,7 +26,7 @@ interface ReplyNotification {
         takecare_tel1: string;
         takecare_id: number;
     };
-    resSafezone: ;
+    resSafezone: any;
     extendedHelpId: number;
     locationData: {
         locat_latitude: string;
