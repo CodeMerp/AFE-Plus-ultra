@@ -221,7 +221,7 @@ export const replyNotification = async ({
                                     },
                                     {
                                         type: 'button',
-                                        style: 'secondary',
+                                        style: 'primary',
                                         height: 'sm',
                                         margin: 'xxl',
                                         color: '#007AFF',
