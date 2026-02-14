@@ -130,7 +130,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
     let message = '';
     let shouldNotifyCaretaker = false;
     if (decision === 'INSIDE_SAFEZONE_R2') {
-      message = '⚠️ มีการกด SOS จากภายในบ้าน (ระบบระงับการแจ้งเหตุถึงเทศบาล)';
+      message = '⚠️ มีการกด SOS จากภายในจากผู้มีภาวะพึ่งพิง';
       shouldNotifyCaretaker = true;
     } else if (decision === 'OUTSIDE_SAFEZONE_R2_WITH_ACTIVE_CASE') {
       message = '⚠️ คุณกดขอความช่วยเหลือซ้ำ แต่ขณะนี้เจ้าหน้าที่กำลังดำเนินการอยู่ (ยังไม่ปิดเคสเดิม)';
