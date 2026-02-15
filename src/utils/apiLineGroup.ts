@@ -222,6 +222,18 @@ export const replyNotification = async ({
                                     {
                                         type: 'button',
                                         style: 'primary',
+                                        height: 'sm',
+                                        margin: 'xxl',
+                                        color: '#007AFF',
+                                        action: {
+                                            type: 'uri',
+                                            label: 'ดูแผนที่/นำทาง',
+                                            uri: `${process.env.WEB_DOMAIN}/location?idlocation=${extendedHelpId}&idsafezone=${resSafezone?.safezone_id || ''}&auToken=${resUser.users_line_id}`
+                                        }
+                                    },
+                                    {
+                                        type: 'button',
+                                        style: 'primary',
                                         color: '#777777',
                                         height: 'sm',
                                         margin: 'xxl',
