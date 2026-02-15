@@ -10,15 +10,6 @@ const LINE_HEADER = {
     Authorization: `Bearer ${process.env.CHANNEL_ACCESS_TOKEN_LINE}`, // Replace with your LINE Channel Access Token
 };
 
-const timeText = new Date().toLocaleString('th-TH', {
-    timeZone: 'Asia/Bangkok',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-});
-
 export const replyMapCoordinates = async ({
     toLineId,
     extenId,

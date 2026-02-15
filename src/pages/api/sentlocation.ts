@@ -111,7 +111,14 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             },
             orderBy: { exten_date: 'desc' },
           });
-          const timeText = moment().format('DD/MM/YYYY HH:mm');
+          const timeText = new Date().toLocaleString('th-TH', {
+            timeZone: 'Asia/Bangkok',
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+          });
           const name = `${takecareperson.takecare_fname} ${takecareperson.takecare_sname}`;
           const postbackData =
             calculatedStatus === 2
