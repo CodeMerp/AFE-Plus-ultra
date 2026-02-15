@@ -202,7 +202,7 @@ if (events.type === "postback" && events.postback?.data) {
 		if (replyToken === "already_sent") {
 		  await replyNotification({ replyToken, message: 'มีคำขอความช่วยเหลือที่ยังไม่ปิดอยู่แล้ว' });
 		} else if (replyToken === "in_safezone") {
-		  await replyNotification({ replyToken, message: 'อยู่ในเขตปลอดภัยแล้ว ไม่สามารถส่งคำขอความช่วยเหลือได้' });
+		  await replyNotification({ replyToken, message: 'อยู่ในเขตปลอดภัยไม่สามารถส่งคำขอได้' });
 		} else {
 		  await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
 		}
