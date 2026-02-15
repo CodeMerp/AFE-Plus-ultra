@@ -199,7 +199,13 @@ if (events.type === "postback" && events.postback?.data) {
 	  console.log("Reply Token for Safezone: ", replyToken);  // เช็ค replyToken
   
 	  if (replyToken) {
-		await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
+		if (replyToken === "already_sent") {
+		  await replyNotification({ replyToken, message: 'มีคำขอความช่วยเหลือที่ยังไม่ปิดอยู่แล้ว' });
+		} else if (replyToken === "in_safezone") {
+		  await replyNotification({ replyToken, message: 'อยู่ในเขตปลอดภัยแล้ว ไม่สามารถส่งคำขอความช่วยเหลือได้' });
+		} else {
+		  await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
+		}
 	  }
 	} else if (postback.type === 'accept') {
 	  console.log("Accept Postback Triggered: ", postback);  // เช็คกรณี accept

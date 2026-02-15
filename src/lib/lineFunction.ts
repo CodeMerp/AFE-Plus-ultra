@@ -10,6 +10,23 @@ interface PostbackSafezoneProps {
     takecarepersonId: number;
 }
 
+const getCurrentLocationStatus = async (
+    takecare_id: number,
+    users_id: number
+) => {
+    const latestLocation = await prisma.location.findFirst({
+        where: {
+            users_id: Number(users_id),
+            takecare_id: Number(takecare_id),
+        },
+        orderBy: {
+            locat_timestamp: 'desc',
+        },
+    });
+
+    return latestLocation ? Number(latestLocation.locat_status) : null;
+};
+
 const getActiveExtendedHelp = async (takecareId: number, usersId: number) => {
     return prisma.extendedhelp.findFirst({
         where: {
@@ -57,7 +74,7 @@ export const postbackHeartRate = async ({
                     resUser.users_id
                 );
 
-                // ✅ เช็คว่ามีเคสที่ยังไม่ปิดอยู่ → ส่งซ้ำไม่ได้
+                // เช็คว่ามีเคสที่ยังไม่ปิดอยู่ → ส่งซ้ำไม่ได้
                 if (
                     resExtendedHelp &&
                     !resExtendedHelp.exted_closed_date
@@ -109,7 +126,7 @@ export const postbackHeartRate = async ({
 
         return null;
     } catch (error) {
-        console.log("🚨 ~ postbackHeartRate ~ error:", error);
+        console.log(" ~ postbackHeartRate ~ error:", error);
         return null;
     }
 };
@@ -135,7 +152,7 @@ export const postbackFall = async ({
                     resUser.users_id
                 );
 
-                // ✅ เช็คว่ามีเคสที่ยังไม่ปิดอยู่ → ส่งซ้ำไม่ได้
+                // เช็คว่ามีเคสที่ยังไม่ปิดอยู่ → ส่งซ้ำไม่ได้
                 if (
                     resExtendedHelp &&
                     !resExtendedHelp.exted_closed_date
@@ -188,12 +205,11 @@ export const postbackFall = async ({
 
         return null;
     } catch (error) {
-        console.log("🚨 ~ postbackFall ~ error:", error);
+        console.log(" ~ postbackFall ~ error:", error);
         return null;
     }
 };
 
-// ปรับให้ postbackTemp ทำงานเหมือน postbackSafezone
 export const postbackTemp = async ({
     userLineId,
     takecarepersonId,
@@ -215,7 +231,7 @@ export const postbackTemp = async ({
                     resUser.users_id
                 );
 
-                // ✅ เช็คว่ามีเคสที่ยังไม่ปิดอยู่ → ส่งซ้ำไม่ได้
+                // เช็คว่ามีเคสที่ยังไม่ปิดอยู่ → ส่งซ้ำไม่ได้
                 if (
                     resExtendedHelp &&
                     !resExtendedHelp.exted_closed_date
@@ -268,12 +284,11 @@ export const postbackTemp = async ({
 
         return null;
     } catch (error) {
-        console.log("🚨 ~ postbackTemp ~ error:", error);
+        console.log(" ~ postbackTemp ~ error:", error);
         return null;
     }
 };
 
-//
 export const postbackSafezone = async ({
     userLineId,
     takecarepersonId,
@@ -290,12 +305,25 @@ export const postbackSafezone = async ({
                 resUser.users_id
             );
             if (resSafezone) {
+                // เช็คตำแหน่งปัจจุบันว่าอยู่ในเขตปลอดภัยหรือไม่
+                const currentStatus = await getCurrentLocationStatus(
+                    resTakecareperson.takecare_id,
+                    resUser.users_id
+                );
+
+                if (currentStatus === 0) {
+                    console.log(
+                        `User is already in safezone. Cannot send help request. takecare_id: ${resTakecareperson.takecare_id}, users_id: ${resUser.users_id}`
+                    );
+                    return "in_safezone";
+                }
+
                 const resExtendedHelp = await getActiveExtendedHelp(
                     resTakecareperson.takecare_id,
                     resUser.users_id
                 );
 
-                // ✅ เช็คว่ามีเคสที่ยังไม่ปิดอยู่ → ส่งซ้ำไม่ได้
+                // เช็คว่ามีเคสที่ยังไม่ปิดอยู่ → ส่งซ้ำไม่ได้
                 if (
                     resExtendedHelp &&
                     !resExtendedHelp.exted_closed_date
@@ -344,7 +372,7 @@ export const postbackSafezone = async ({
         }
         return null;
     } catch (error) {
-        console.log("🚀 ~ postbackSafezone ~ error:", error);
+        console.log(" ~ postbackSafezone ~ error:", error);
         return null;
     }
 };
