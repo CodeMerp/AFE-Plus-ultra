@@ -198,18 +198,15 @@ if (events.type === "postback" && events.postback?.data) {
 	  const replyToken = await postbackSafezone({ userLineId: postback.userLineId, takecarepersonId: Number(postback.takecarepersonId) });
 	  console.log("Reply Token for Safezone: ", replyToken);  // เช็ค replyToken
   
-	  // ✅ ใช้ replyToken จริงจาก LINE webhook
-	  const lineReplyToken = events.replyToken;
-	  
-if (replyToken) {
-  if (replyToken === "already_sent") {
-		  await replyNotification({ replyToken: lineReplyToken, message: 'มีคำขอความช่วยเหลือที่ยังไม่ปิดอยู่แล้ว' });
-  } else if (replyToken === "in_safezone") {
-		  await replyNotification({ replyToken: lineReplyToken, message: 'อยู่ในเขตปลอดภัยไม่สามารถส่งคำขอได้' });
-  } else {
-    await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
-  }
-}
+	  if (replyToken) {
+		if (replyToken === "already_sent") {
+		  await replyNotification({ replyToken, message: 'มีคำขอความช่วยเหลือที่ยังไม่ปิดอยู่แล้ว' });
+		} else if (replyToken === "in_safezone") {
+		  await replyNotification({ replyToken, message: 'อยู่ในเขตปลอดภัยไม่สามารถส่งคำขอได้' });
+		} else {
+		  await replyNotification({ replyToken, message: 'ส่งคำขอความช่วยเหลือแล้ว' });
+		}
+	  }
 	} else if (postback.type === 'accept') {
 	  console.log("Accept Postback Triggered: ", postback);  // เช็คกรณี accept
 	  let data = postback;
