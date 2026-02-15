@@ -13,7 +13,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
     if (req.method === 'PUT' || req.method === 'POST') {
         try {
             const body = req.body;
-
             if (!body.uId || !body.takecare_id || !body.bpm) {
                 return res.status(400).json({ message: 'error', data: 'ไม่พบพารามิเตอร์ uId, takecare_id, bpm' });
             }
@@ -40,7 +39,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 return res.status(200).json({ message: 'error', data: 'ไม่พบข้อมูล user หรือ takecareperson' });
             }
 
-            // อ่านค่าการตั้งค่า HR
+            // อ่านค่าการตั้งค่า HR [cite: 9]
             const settingHR = await prisma.heartrate_settings.findFirst({
                 where: {
                     takecare_id: takecareperson.takecare_id,
@@ -48,20 +47,19 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 }
             });
 
-            // เปรียบเทียบค่า HR กับที่ตั้งไว้ (เช็คแค่ max_bpm)
             const bpmValue = Number(body.bpm);
-            let calculatedStatus = Number(body.status);
+            let calculatedStatus = 0;
 
-            // เช็คเฉพาะค่าที่เกิน max_bpm เท่านั้น
+            // เช็คเฉพาะค่าที่เกิน max_bpm [cite: 12, 13]
             if (settingHR && bpmValue > settingHR.max_bpm) {
-                calculatedStatus = 1; // เกิน max_bpm ถือว่าผิดปกติ
+                calculatedStatus = 1;
             } else {
-                calculatedStatus = 0; // ปกติ
+                calculatedStatus = 0;
             }
 
             const status = calculatedStatus;
 
-            // ดึงข้อมูล record ล่าสุด
+            // ดึงข้อมูล record ล่าสุดเพื่อตรวจสอบสถานะก่อนหน้า [cite: 15, 16]
             const lastHR = await prisma.heartrate_records.findFirst({
                 where: {
                     users_id: user.users_id,
@@ -72,23 +70,20 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 }
             });
 
-            // ตรวจสอบว่าควรส่ง notification หรือไม่
             let shouldSendNotification = false;
+
+            // ปรับ Logic: แจ้งเตือนครั้งเดียวเมื่อผิดปกติ [cite: 18]
             if (status === 1) {
-                // กรณีไม่มี record เก่า หรือ status เก่าไม่ผิดปกติ -> ส่งได้เลย
+                // ถ้าไม่มีข้อมูลเก่า หรือ ข้อมูลเก่าสถานะปกติ (noti_status != 1) ให้ส่งแจ้งเตือน [cite: 18]
                 if (!lastHR || lastHR.noti_status !== 1) {
                     shouldSendNotification = true;
-                } 
-                // กรณี status เก่าผิดปกติ -> เช็คว่าผ่านมา 5 นาทีหรือยัง
-                else if (lastHR.noti_time && moment().diff(moment(lastHR.noti_time), 'minutes') >= 5) {
-                    shouldSendNotification = true;
                 }
+                // ถ้า lastHR.noti_status เป็น 1 อยู่แล้ว จะไม่ส่งซ้ำ (ตัดการเช็ค 5 นาทีออก) 
             }
 
-            // ส่ง notification ถ้าจำเป็น
+            // ส่ง notification [cite: 21, 22]
             if (shouldSendNotification) {
                 const message = `คุณ ${takecareperson.takecare_fname} ${takecareperson.takecare_sname}\nชีพจรเกินค่าที่กำหนด: ${bpmValue} bpm`;
-
                 const replyToken = user.users_line_id || '';
                 if (replyToken) {
                     await replyNotificationPostbackHeart({
@@ -101,38 +96,34 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                 }
             }
 
-            // เตรียมข้อมูลสำหรับ update/create
+            // เตรียมข้อมูลสำหรับ update/create [cite: 23]
             const recordData: any = {
                 bpm: bpmValue,
                 record_date: new Date(),
                 status: status
             };
 
-            // อัพเดท noti_time และ noti_status เฉพาะตอนที่ส่ง notification
             if (shouldSendNotification) {
                 recordData.noti_time = new Date();
                 recordData.noti_status = 1;
             } else if (status === 0) {
-                // ถ้ากลับมาปกติ ให้รีเซ็ต noti_status
+                // เมื่อสถานะกลับมาปกติ ให้รีเซ็ตค่า เพื่อให้แจ้งเตือนได้ใหม่ในครั้งหน้า 
                 recordData.noti_status = 0;
                 recordData.noti_time = null;
             }
-            // ถ้า status = 1 แต่ไม่ถึงเวลาส่ง notification -> ไม่แก้ noti_time/noti_status
 
-            // บันทึกข้อมูล
+            // บันทึกข้อมูลลงฐานข้อมูล [cite: 27, 28]
             if (lastHR) {
                 const updateData: any = { ...recordData };
                 
-                // ถ้าไม่ควรส่ง notification และ status ยังเป็น 1 -> เก็บค่า noti_time/noti_status เดิมไว้
+                // หากยังผิดปกติแต่ไม่ส่งแจ้งเตือนซ้ำ ให้คงค่า noti เดิมไว้ [cite: 27, 28]
                 if (!shouldSendNotification && status === 1) {
                     delete updateData.noti_time;
                     delete updateData.noti_status;
                 }
 
                 await prisma.heartrate_records.update({
-                    where: {
-                        heartrate_id: lastHR.heartrate_id
-                    },
+                    where: { heartrate_id: lastHR.heartrate_id },
                     data: updateData
                 });
             } else {
@@ -143,10 +134,6 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<D
                         ...recordData
                     }
                 });
-            }
-
-            if (status === 0) {
-                console.log("อัตราการเต้นของหัวใจอยู่ในระดับปกติ");
             }
 
             return res.status(200).json({ message: 'success', data: 'บันทึกข้อมูลเรียบร้อย' });
