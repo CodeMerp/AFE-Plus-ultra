@@ -422,12 +422,12 @@ export const postbackAccept = async (data: any) => {
                     let dependentTel = "-";
 
                     if (isAcceptCallFlow) {
-                        const dependentUser = await prisma.users.findFirst({
+                        const dependentUser = await prisma.takecareperson.findFirst({
                             where: { users_id: Number(resExtendedHelp.user_id) },
                         });
                         if (dependentUser) {
-                            dependentFullName = `${dependentUser.users_fname || ""} ${dependentUser.users_sname || ""}`.trim() || "-";
-                            dependentTel = dependentUser.users_tel1 || dependentUser.users_tel_home || "-";
+                            dependentFullName = `${dependentUser.takecare_fname || ""} ${dependentUser.takecare_sname || ""}`.trim() || "-";
+                            dependentTel = dependentUser.takecare_tel1 || dependentUser.takecare_tel_home || "-";
                         }
                     }
 
