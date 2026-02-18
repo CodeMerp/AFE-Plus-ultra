@@ -390,24 +390,45 @@ export const postbackAccept = async (data: any) => {
         } else {
             const resExtendedHelp = await api.getExtendedHelpById(data.extenId);
             if (resExtendedHelp) {
+                const isAcceptCallFlow = data.acceptMode === "accept_call";
+                let isDuplicateAcceptCall = false;
+
                 if (
                     resExtendedHelp.exten_received_date &&
                     resExtendedHelp.exten_received_user_id
                 ) {
-                    await replyNoti({
-                        replyToken: data.groupId,
-                        userIdAccept: data.userIdAccept,
-                        title: "สถานะเคส",
-                        titleColor: "#1976D2",
-                        message: "มีผู้รับเคสช่วยเหลือแล้ว",
-                    });
-                    return null;
-                } else {
+                    // Allow duplicate accept only for accept-call flow while case is still open.
+                    if (isAcceptCallFlow) {
+                        if (resExtendedHelp.exted_closed_date || resExtendedHelp.exten_closed_user_id) {
+                            await replyNoti({
+                                replyToken: data.groupId,
+                                userIdAccept: data.userIdAccept,
+                                title: "สถานะเคส",
+                                titleColor: "#1976D2",
+                                message: "มีผู้รับเคสช่วยเหลือแล้ว",
+                            });
+                            return null;
+                        }
+                        isDuplicateAcceptCall = true;
+                    } else {
+                        await replyNoti({
+                            replyToken: data.groupId,
+                            userIdAccept: data.userIdAccept,
+                            title: "สถานะเคส",
+                            titleColor: "#1976D2",
+                            message: "มีผู้รับเคสช่วยเหลือแล้ว",
+                        });
+                        return null;
+                    }
+                }
+
+                if (!isDuplicateAcceptCall) {
                     await api.updateExtendedHelp({
                         extenId: data.extenId,
                         typeStatus: "received",
                         extenReceivedUserId: resUser.users_id,
                     });
+                }
 
                     // ✨ สร้าง postback data 3 แบบ
                     // แบบที่ 1: ปกติ (ไม่มี closeType)
@@ -417,7 +438,6 @@ export const postbackAccept = async (data: any) => {
                     // แบบที่ 3: ปิดเคสทางหน้าเว็บ
                     const closeCasePostbackDataAuto = `type=close&takecareId=${data.takecareId}&extenId=${data.extenId}&userLineId=${data.userLineId}&closeType=auto`;
 
-                    const isAcceptCallFlow = data.acceptMode === "accept_call";
                     let dependentFullName = "-";
                     let dependentTel = "-";
 
@@ -475,7 +495,6 @@ export const postbackAccept = async (data: any) => {
                             }),
                     });
                     return data.userLineId;
-                }
             }
         }
         return null;
