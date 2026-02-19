@@ -89,8 +89,8 @@ const STATIC_DISEASES: Option[] = [
   { label: "อื่นๆ (โปรดระบุ)", value: "อื่นๆ" },
 ];
 
-const parseInitialValue = (value?: string): Option[] => {
-  if (!value) return [];
+const parseInitialValue = (value?: string | null): Option[] => {
+  if (!value || value === null) return [];
   return value
     .split(",")
     .map((item) => item.trim())

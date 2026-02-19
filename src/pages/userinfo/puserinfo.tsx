@@ -118,7 +118,7 @@ const Puserinfo = () => {
                                 takecare_postcode: takecareData.takecare_postcode,
                                 takecare_tel1: takecareData.takecare_tel1,
                                 takecare_tel_home: takecareData.takecare_tel_home,
-                                takecare_disease: takecareData.takecare_disease,
+                                takecare_disease: takecareData.takecare_disease || "",
                                 takecare_drug: takecareData.takecare_drug,
                             });
                         }
