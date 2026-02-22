@@ -392,7 +392,7 @@ export const postbackAccept = async (data: any) => {
         const resExtendedHelp = await api.getExtendedHelpById(data.extenId);
         if (!resExtendedHelp) return null;
 
-        // ✨ ตรวจสอบว่ามีคนรับเคสไปแล้วหรือไม่ (เฉพาะกรณีปกติ)
+        // ✅ ตรวจสอบว่ามีคนรับเคสไปแล้วหรือไม่ (เฉพาะกรณีปกติ)
         if (
             resExtendedHelp.exten_received_date &&
             resExtendedHelp.exten_received_user_id &&
@@ -408,38 +408,42 @@ export const postbackAccept = async (data: any) => {
             return null;
         }
 
-        // ✨ ตรวจสอบว่าเป็นคนเดียวกับที่รับเคสคนแรกหรือไม่ (เฉพาะกรณี LIFF)
+        // ✅ เฉพาะ LIFF: เช็คว่าเป็นคนแรกที่รับเคสหรือไม่
         if (
             data.acceptMode === "accept_call" &&
             resExtendedHelp.exten_received_date &&
             resExtendedHelp.exten_received_user_id &&
             resExtendedHelp.exten_received_user_id !== resUser.users_id
         ) {
-            await replyNoti({
-                replyToken: data.groupId,
-                userIdAccept: data.userIdAccept,
-                title: "สถานะเคส",
-                titleColor: "#1976D2",
-                message: "มีผู้รับเคสช่วยเหลือแล้ว",
-            });
+            // ⚠️ ไม่ใช่คนแรกที่รับเคส → ไม่ส่ง Flex
+            console.log(`🚫 User ${resUser.users_id} is not the first acceptor. No Flex sent.`);
             return null;
         }
 
-        // ✨ เช็คก่อน update ว่าเป็นครั้งแรกหรือไม่
+        // ✨ บันทึกว่าเป็นครั้งแรกที่กด LIFF หรือไม่
         const isFirstAccept = !resExtendedHelp.exten_received_date;
+        const isAcceptCallFlow = data.acceptMode === "accept_call";
 
-        // update ทีหลัง
-        await api.updateExtendedHelp({
-            extenId: data.extenId,
-            typeStatus: "received",
-            extenReceivedUserId: resUser.users_id,
-        });
+        // 🔹 เฉพาะ LIFF + ครั้งแรก → อัพเดต DB
+        if (isAcceptCallFlow && isFirstAccept) {
+            await api.updateExtendedHelp({
+                extenId: data.extenId,
+                typeStatus: "received",
+                extenReceivedUserId: resUser.users_id,
+            });
+        } 
+        // 🔹 กรณีปกติ → อัพเดตทุกครั้ง
+        else if (!isAcceptCallFlow) {
+            await api.updateExtendedHelp({
+                extenId: data.extenId,
+                typeStatus: "received",
+                extenReceivedUserId: resUser.users_id,
+            });
+        }
 
         const closeCasePostbackDataNormal = `type=close&takecareId=${data.takecareId}&extenId=${data.extenId}&userLineId=${data.userLineId}`;
         const closeCasePostbackDataManual = `type=close&takecareId=${data.takecareId}&extenId=${data.extenId}&userLineId=${data.userLineId}&closeType=manual`;
         const closeCasePostbackDataAuto = `type=close&takecareId=${data.takecareId}&extenId=${data.extenId}&userLineId=${data.userLineId}&closeType=auto`;
-
-        const isAcceptCallFlow = data.acceptMode === "accept_call";
 
         if (isAcceptCallFlow) {
             // ✨ ส่ง Flex เฉพาะครั้งแรกที่กด LIFF
@@ -478,9 +482,13 @@ export const postbackAccept = async (data: any) => {
                         },
                     ],
                 });
+                console.log(`✅ First LIFF accept by user ${resUser.users_id} - Flex sent`);
+            } else {
+                // ⏭️ กดซ้ำ → ไม่ส่งอะไร
+                console.log(`⏭️ Duplicate LIFF accept by user ${resUser.users_id} - No Flex sent`);
             }
         } else {
-            // ✨ กรณีปกติ ส่งทุกครั้ง
+            // ✅ กรณีปกติ ส่งทุกครั้ง
             await replyNoti({
                 replyToken: data.groupId,
                 userIdAccept: data.userIdAccept,
