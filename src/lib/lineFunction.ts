@@ -387,119 +387,121 @@ export const postbackAccept = async (data: any) => {
                 message: "ไม่พบข้อมูลของคุณไม่สามารถรับเคสได้",
             });
             return null;
-        } else {
-            const resExtendedHelp = await api.getExtendedHelpById(data.extenId);
-            if (resExtendedHelp) {
-                const isAcceptCallFlow = data.acceptMode === "accept_call";
-                let isDuplicateAcceptCall = false;
-
-                if (
-                    resExtendedHelp.exten_received_date &&
-                    resExtendedHelp.exten_received_user_id
-                ) {
-                    // Allow duplicate accept only for accept-call flow while case is still open.
-                    if (isAcceptCallFlow) {
-                        if (resExtendedHelp.exted_closed_date || resExtendedHelp.exten_closed_user_id) {
-                            await replyNoti({
-                                replyToken: data.groupId,
-                                userIdAccept: data.userIdAccept,
-                                title: "สถานะเคส",
-                                titleColor: "#1976D2",
-                                message: "มีผู้รับเคสช่วยเหลือแล้ว",
-                            });
-                            return null;
-                        }
-                        isDuplicateAcceptCall = true;
-                    } else {
-                        await replyNoti({
-                            replyToken: data.groupId,
-                            userIdAccept: data.userIdAccept,
-                            title: "สถานะเคส",
-                            titleColor: "#1976D2",
-                            message: "มีผู้รับเคสช่วยเหลือแล้ว",
-                        });
-                        return null;
-                    }
-                }
-
-                if (!isDuplicateAcceptCall) {
-                    await api.updateExtendedHelp({
-                        extenId: data.extenId,
-                        typeStatus: "received",
-                        extenReceivedUserId: resUser.users_id,
-                    });
-                }
-
-                    // ✨ สร้าง postback data 3 แบบ
-                    // แบบที่ 1: ปกติ (ไม่มี closeType)
-                    const closeCasePostbackDataNormal = `type=close&takecareId=${data.takecareId}&extenId=${data.extenId}&userLineId=${data.userLineId}`;
-                    // แบบที่ 2: ปิดเคสด้วยตัวเอง
-                    const closeCasePostbackDataManual = `type=close&takecareId=${data.takecareId}&extenId=${data.extenId}&userLineId=${data.userLineId}&closeType=manual`;
-                    // แบบที่ 3: ปิดเคสทางหน้าเว็บ
-                    const closeCasePostbackDataAuto = `type=close&takecareId=${data.takecareId}&extenId=${data.extenId}&userLineId=${data.userLineId}&closeType=auto`;
-
-                    let dependentFullName = "-";
-                    let dependentTel = "-";
-
-                    if (isAcceptCallFlow) {
-                        const dependentUser = await prisma.takecareperson.findFirst({
-                            where: { users_id: Number(resExtendedHelp.user_id) },
-                        });
-                        if (dependentUser) {
-                            dependentFullName = `${dependentUser.takecare_fname || ""} ${dependentUser.takecare_sname || ""}`.trim() || "-";
-                            dependentTel = dependentUser.takecare_tel1 || dependentUser.takecare_tel_home || "-";
-                        }
-                    }
-
-                    await replyNoti({
-                        replyToken: data.groupId,
-                        userIdAccept: data.userIdAccept,
-                        title: "สถานะเคส",
-                        titleColor: "#1976D2",
-                        message: isAcceptCallFlow
-                            ? "ข้อมูลผู้มีภาวะพึ่งพิง"
-                            : "รับเคสช่วยเหลือแล้ว",
-                        ...(isAcceptCallFlow
-                            ? {
-                                detailRows: [
-                                    { label: "ชื่อ-สกุล", value: dependentFullName },
-                                    { label: "เบอร์โทร", value: dependentTel },
-                                ],
-                            }
-                            : {}),
-                        ...(isAcceptCallFlow
-                            ? {
-                                // ✨ กรณี LIFF: แสดง 2 ปุ่มใหม่
-                                buttons: [
-                                    {
-                                        type: "postback",
-                                        label: "ปิดเคสอัตโนมัติ",
-                                        data: closeCasePostbackDataAuto,
-                                    },
-                                    {
-                                        type: "postback",
-                                        label: "ปิดเคสด้วยตัวเอง",
-                                        data: closeCasePostbackDataManual,
-                                    },
-                                ],
-                            }
-                            : {
-                                // ✨ กรณีปกติ: แสดงปุ่มเดิม 1 ปุ่ม
-                                buttons: [
-                                    {
-                                        type: "postback",
-                                        label: "ปิดเคสช่วยเหลือ",
-                                        data: closeCasePostbackDataNormal,
-                                    },
-                                ],
-                            }),
-                    });
-                    return data.userLineId;
-            }
         }
-        return null;
+
+        const resExtendedHelp = await api.getExtendedHelpById(data.extenId);
+        if (!resExtendedHelp) return null;
+
+        // ✨ ตรวจสอบว่ามีคนรับเคสไปแล้วหรือไม่ (เฉพาะกรณีปกติ)
+        if (
+            resExtendedHelp.exten_received_date &&
+            resExtendedHelp.exten_received_user_id &&
+            data.acceptMode !== "accept_call"
+        ) {
+            await replyNoti({
+                replyToken: data.groupId,
+                userIdAccept: data.userIdAccept,
+                title: "สถานะเคส",
+                titleColor: "#1976D2",
+                message: "มีผู้รับเคสช่วยเหลือแล้ว",
+            });
+            return null;
+        }
+
+        // ✨ ตรวจสอบว่าเป็นคนเดียวกับที่รับเคสคนแรกหรือไม่ (เฉพาะกรณี LIFF)
+        if (
+            data.acceptMode === "accept_call" &&
+            resExtendedHelp.exten_received_date &&
+            resExtendedHelp.exten_received_user_id &&
+            resExtendedHelp.exten_received_user_id !== resUser.users_id
+        ) {
+            await replyNoti({
+                replyToken: data.groupId,
+                userIdAccept: data.userIdAccept,
+                title: "สถานะเคส",
+                titleColor: "#1976D2",
+                message: "มีผู้รับเคสช่วยเหลือแล้ว",
+            });
+            return null;
+        }
+
+        // ✨ เช็คก่อน update ว่าเป็นครั้งแรกหรือไม่
+        const isFirstAccept = !resExtendedHelp.exten_received_date;
+
+        // update ทีหลัง
+        await api.updateExtendedHelp({
+            extenId: data.extenId,
+            typeStatus: "received",
+            extenReceivedUserId: resUser.users_id,
+        });
+
+        const closeCasePostbackDataNormal = `type=close&takecareId=${data.takecareId}&extenId=${data.extenId}&userLineId=${data.userLineId}`;
+        const closeCasePostbackDataManual = `type=close&takecareId=${data.takecareId}&extenId=${data.extenId}&userLineId=${data.userLineId}&closeType=manual`;
+        const closeCasePostbackDataAuto = `type=close&takecareId=${data.takecareId}&extenId=${data.extenId}&userLineId=${data.userLineId}&closeType=auto`;
+
+        const isAcceptCallFlow = data.acceptMode === "accept_call";
+
+        if (isAcceptCallFlow) {
+            // ✨ ส่ง Flex เฉพาะครั้งแรกที่กด LIFF
+            if (isFirstAccept) {
+                let dependentFullName = "-";
+                let dependentTel = "-";
+
+                const dependentUser = await prisma.takecareperson.findFirst({
+                    where: { users_id: Number(resExtendedHelp.user_id) },
+                });
+                if (dependentUser) {
+                    dependentFullName = `${dependentUser.takecare_fname || ""} ${dependentUser.takecare_sname || ""}`.trim() || "-";
+                    dependentTel = dependentUser.takecare_tel1 || dependentUser.takecare_tel_home || "-";
+                }
+
+                await replyNoti({
+                    replyToken: data.groupId,
+                    userIdAccept: data.userIdAccept,
+                    title: "สถานะเคส",
+                    titleColor: "#1976D2",
+                    message: "ข้อมูลผู้มีภาวะพึ่งพิง",
+                    detailRows: [
+                        { label: "ชื่อ-สกุล", value: dependentFullName },
+                        { label: "เบอร์โทร", value: dependentTel },
+                    ],
+                    buttons: [
+                        {
+                            type: "postback",
+                            label: "ปิดเคสอัตโนมัติ",
+                            data: closeCasePostbackDataAuto,
+                        },
+                        {
+                            type: "postback",
+                            label: "ปิดเคสด้วยตัวเอง",
+                            data: closeCasePostbackDataManual,
+                        },
+                    ],
+                });
+            }
+        } else {
+            // ✨ กรณีปกติ ส่งทุกครั้ง
+            await replyNoti({
+                replyToken: data.groupId,
+                userIdAccept: data.userIdAccept,
+                title: "สถานะเคส",
+                titleColor: "#1976D2",
+                message: "รับเคสช่วยเหลือแล้ว",
+                buttons: [
+                    {
+                        type: "postback",
+                        label: "ปิดเคสช่วยเหลือ",
+                        data: closeCasePostbackDataNormal,
+                    },
+                ],
+            });
+        }
+
+        return data.userLineId;
+
     } catch (error) {
-        return error;
+        console.error("❌ postbackAccept error:", error);
+        return null;
     }
 };
 
