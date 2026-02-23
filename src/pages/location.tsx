@@ -68,6 +68,7 @@ const Location = () => {
     const [infoWindowData, setInfoWindowData] = useState({ id: 0, address: '', show: false });
     const [mapType, setMapType] = useState('roadmap');
     const [autoFollow, setAutoFollow] = useState(true);
+    const [speed, setSpeed] = useState<number>(0); // km/h
 
     // --- Effects ---
 
@@ -185,11 +186,16 @@ const Location = () => {
         if (!navigator.geolocation) return;
         const watchId = navigator.geolocation.watchPosition(
             (position) => {
-                const { latitude, longitude, heading: gpsHeading } = position.coords;
+                const { latitude, longitude, heading: gpsHeading, speed: gpsSpeed } = position.coords;
                 const newPos = { lat: latitude, lng: longitude };
                 setMyPos(newPos);
 
-                if (gpsHeading !== null && !isNaN(gpsHeading) && position.coords.speed && position.coords.speed > 1) {
+                // Update speed (m/s → km/h)
+                if (gpsSpeed !== null && !isNaN(gpsSpeed)) {
+                    setSpeed(Math.round(gpsSpeed * 3.6));
+                }
+
+                if (gpsHeading !== null && !isNaN(gpsHeading) && gpsSpeed && gpsSpeed > 1) {
                     setHeading(gpsHeading);
                 }
 
@@ -454,22 +460,31 @@ const Location = () => {
             </div>
 
 
-            {/* Recenter Button */}
-            {!autoFollow && (
-                <div
-                    onClick={() => {
-                        setAutoFollow(true);
-                        if (myPos && mapRef) {
-                            mapRef.panTo(myPos);
-                            mapRef.setZoom(18);
-                        }
-                    }}
-                    className="absolute bottom-56 left-4 z-40 bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 cursor-pointer text-blue-600 font-bold text-sm tracking-wide hover:bg-gray-50 transition-colors animate-fade-in-up"
-                >
-                    <svg className="w-4 h-4 transform rotate-45" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
-                    ปรับจุดกลาง
+            {/* Left Side Controls: Recenter + Speed */}
+            <div className="absolute left-4 z-40 flex flex-col gap-3" style={{ bottom: '220px' }}>
+                {/* Speed Badge */}
+                <div className="bg-white rounded-2xl shadow-lg flex flex-col items-center justify-center px-3 py-2" style={{ minWidth: '56px' }}>
+                    <span className="text-2xl font-black text-gray-800 leading-none">{speed}</span>
+                    <span className="text-xs font-medium text-gray-400 leading-none mt-1">km/h</span>
                 </div>
-            )}
+
+                {/* Recenter Button */}
+                {!autoFollow && (
+                    <div
+                        onClick={() => {
+                            setAutoFollow(true);
+                            if (myPos && mapRef) {
+                                mapRef.panTo(myPos);
+                                mapRef.setZoom(18);
+                            }
+                        }}
+                        className="bg-white px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 cursor-pointer text-blue-600 font-bold text-sm tracking-wide hover:bg-gray-50 active:scale-95 transition-all"
+                    >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                        ปรับจุดกลาง
+                    </div>
+                )}
+            </div>
 
             {/* Map Layer Control */}
             <div className="absolute top-4 right-4 z-40">
