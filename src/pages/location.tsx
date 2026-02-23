@@ -475,7 +475,7 @@ const Location = () => {
                         }
                     }}
                     className="absolute left-4 z-40 bg-white px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 cursor-pointer text-blue-600 font-bold text-sm tracking-wide hover:bg-gray-50 active:scale-95 transition-all"
-                    style={{ bottom: '220px' }}
+                    style={{ bottom: '260px' }}
                 >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                     ปรับจุดกลาง
