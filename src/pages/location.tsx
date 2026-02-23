@@ -333,7 +333,6 @@ const Location = () => {
                         tilt: 45, // 3D Perspective
                         mapTypeId: mapType,
                         gestureHandling: "greedy",
-                        mapId: process.env.NEXT_PUBLIC_MAP_ID
                     }}
                     onDragStart={() => setAutoFollow(false)}
                     onZoomChanged={() => setAutoFollow(false)}
