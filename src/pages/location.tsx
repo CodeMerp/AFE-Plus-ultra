@@ -159,13 +159,6 @@ const Location = () => {
         }
     }, []);
 
-    // 1.5. Sync padding to map whenever padding state or mapRef changes
-    useEffect(() => {
-        if (mapRef) {
-            mapRef.moveCamera({ padding } as google.maps.CameraOptions);
-        }
-    }, [mapRef, padding]);
-
     // 2. Compass Heading
     useEffect(() => {
         const handleOrientation = (event: DeviceOrientationEvent) => {
@@ -301,13 +294,9 @@ const Location = () => {
         window.open(url, "_blank");
     };
 
-    // FIX: Set padding via moveCamera in onLoad instead of in MapOptions
-    // (padding is not a recognized property in @react-google-maps/api's MapOptions type)
     const onLoad = useCallback((mapInstance: google.maps.Map) => {
         setMapRef(mapInstance);
-        // Apply initial padding immediately when map loads
-        mapInstance.moveCamera({ padding } as google.maps.CameraOptions);
-    }, [padding]);
+    }, []);
 
     const handleMarkerClick = (id: number, address: string) => {
         setInfoWindowData({ id, address, show: true });
@@ -342,10 +331,10 @@ const Location = () => {
                         zoomControl: false,
                         heading: heading, // Dynamic Heading
                         tilt: 45, // 3D Perspective
-                        // FIX: padding removed from here — now handled via mapRef.moveCamera()
+                        padding: padding, // Offset for bottom sheet
                         mapTypeId: mapType,
                         gestureHandling: "greedy",
-                    }}
+                    } as google.maps.MapOptions}
                     onDragStart={() => setAutoFollow(false)}
                     onZoomChanged={() => setAutoFollow(false)}
                 >
