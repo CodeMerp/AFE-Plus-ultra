@@ -185,11 +185,11 @@ const Location = () => {
         if (!navigator.geolocation) return;
         const watchId = navigator.geolocation.watchPosition(
             (position) => {
-                const { latitude, longitude, heading: gpsHeading, speed: gpsSpeed } = position.coords;
+                const { latitude, longitude, heading: gpsHeading } = position.coords;
                 const newPos = { lat: latitude, lng: longitude };
                 setMyPos(newPos);
 
-                if (gpsHeading !== null && !isNaN(gpsHeading) && gpsSpeed && gpsSpeed > 1) {
+                if (gpsHeading !== null && !isNaN(gpsHeading) && position.coords.speed && position.coords.speed > 1) {
                     setHeading(gpsHeading);
                 }
 
@@ -331,10 +331,10 @@ const Location = () => {
                         zoomControl: false,
                         heading: heading, // Dynamic Heading
                         tilt: 45, // 3D Perspective
-                        padding: padding, // Offset for bottom sheet
                         mapTypeId: mapType,
                         gestureHandling: "greedy",
-                    } as google.maps.MapOptions}
+                        mapId: process.env.NEXT_PUBLIC_MAP_ID
+                    }}
                     onDragStart={() => setAutoFollow(false)}
                     onZoomChanged={() => setAutoFollow(false)}
                 >
@@ -459,25 +459,14 @@ const Location = () => {
                 <div
                     onClick={() => {
                         setAutoFollow(true);
-                        if (mapRef) {
-                            // Fit bounds to show both my location and patient
-                            const bounds = new google.maps.LatLngBounds();
-                            if (myPos) bounds.extend(myPos);
-                            if (patientPos.lat !== 0) bounds.extend(patientPos);
-                            if (safezonePos.lat !== 0) bounds.extend(safezonePos);
-
-                            if (!bounds.isEmpty()) {
-                                mapRef.fitBounds(bounds, { top: 100, bottom: 250, left: 40, right: 40 });
-                            } else if (myPos) {
-                                mapRef.panTo(myPos);
-                                mapRef.setZoom(18);
-                            }
+                        if (myPos && mapRef) {
+                            mapRef.panTo(myPos);
+                            mapRef.setZoom(18);
                         }
                     }}
-                    className="absolute left-4 z-40 bg-white px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 cursor-pointer text-blue-600 font-bold text-sm tracking-wide hover:bg-gray-50 active:scale-95 transition-all"
-                    style={{ bottom: '260px' }}
+                    className="absolute bottom-40 left-4 z-30 bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 cursor-pointer text-blue-600 font-bold text-sm tracking-wide hover:bg-gray-50 transition-colors animate-fade-in-up"
                 >
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                    <svg className="w-4 h-4 transform rotate-45" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                     ปรับจุดกลาง
                 </div>
             )}

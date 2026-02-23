@@ -348,6 +348,7 @@ const NavigationMode = () => {
             disableDefaultUI: true, 
             mapTypeId: mapType, 
             gestureHandling: "greedy",
+            mapId: process.env.NEXT_PUBLIC_MAP_ID
         }}
         // Note: initial tilt/heading handled by moveCamera in effect
       >
