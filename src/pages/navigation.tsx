@@ -171,7 +171,7 @@ const NavigationMode = () => {
       const { users_id, takecare_id, idlocation } = router.query;
       if (!users_id || !takecare_id) return;
       try {
-        const url = `${process.env.NEXT_PUBLIC_WEB_DOMAIN}/api/location/getLocation?takecare_id=${takecare_id}&users_id=${users_id}&location_id=${idlocation || ''}`;
+        const url = `${process.env.WEB_DOMAIN}/api/location/getLocation?takecare_id=${takecare_id}&users_id=${users_id}&location_id=${idlocation || ''}`;
         const res = await axios.get(url);
         if (res.data?.data) {
           const p = { lat: Number(res.data.data.locat_latitude), lng: Number(res.data.data.locat_longitude) };
