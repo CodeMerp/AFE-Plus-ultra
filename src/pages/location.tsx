@@ -162,7 +162,7 @@ const Location = () => {
     // 1.5. Sync padding to map whenever padding state or mapRef changes
     useEffect(() => {
         if (mapRef) {
-            mapRef.moveCamera({ padding });
+            mapRef.moveCamera({ padding } as google.maps.CameraOptions);
         }
     }, [mapRef, padding]);
 
@@ -306,7 +306,7 @@ const Location = () => {
     const onLoad = useCallback((mapInstance: google.maps.Map) => {
         setMapRef(mapInstance);
         // Apply initial padding immediately when map loads
-        mapInstance.moveCamera({ padding });
+        mapInstance.moveCamera({ padding } as google.maps.CameraOptions);
     }, [padding]);
 
     const handleMarkerClick = (id: number, address: string) => {
