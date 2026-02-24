@@ -701,7 +701,7 @@ export default function NavigationPage() {
           </div>
           <div className="flex items-center">
             <Link href={`/location?users_id=${router.query.users_id || ''}&takecare_id=${router.query.takecare_id || ''}&idlocation=${router.query.idlocation || ''}&idsafezone=${router.query.idsafezone || ''}`}>
-              <button className="bg-[#EA4335] text-white font-bold text-[17px] h-12 px-8 rounded-full shadow-sm active:scale-95 transition-all outline-none border-none">
+              <button onClick={() => router.back()} className="bg-[#EA4335] text-white font-bold text-[17px] h-12 px-8 rounded-full shadow-sm active:scale-95 transition-all outline-none border-none">
                 ออก
               </button>
             </Link>
