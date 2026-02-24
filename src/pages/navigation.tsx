@@ -1,441 +1,738 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import { GoogleMap, DirectionsRenderer, MarkerF } from "@react-google-maps/api";
-import { useGoogleMaps } from "@/providers/GoogleMapsProvider"; 
-import MapLayerControl from "@/components/MapLayerControl";
-import axios from 'axios';
-import { useRouter } from 'next/router';
+"use client";
 
-// --- Configuration ---
-const MAP_CONTAINER_STYLE = { width: "100%", height: "100dvh" };
-const INITIAL_CENTER = { lat: 13.7563, lng: 100.5018 };
-const POS_ANIMATION_DURATION = 1000; // ms
+import { useEffect, useRef, useState, useCallback } from "react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import Link from "next/link";
+import axios from "axios";
+import { useRouter } from "next/router";
+
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN || "";
+mapboxgl.accessToken = MAPBOX_TOKEN;
 
 // --- Math Helpers ---
-const toRad = (d: number) => (d * Math.PI) / 180;
-const toDeg = (r: number) => (r * 180) / Math.PI;
-
-const getDistance = (p1: google.maps.LatLngLiteral, p2: google.maps.LatLngLiteral) => {
-  const R = 6371e3;
-  const φ1 = toRad(p1.lat);
-  const φ2 = toRad(p2.lat);
-  const Δφ = toRad(p2.lat - p1.lat);
-  const Δλ = toRad(p2.lng - p1.lng);
-  const a = Math.sin(Δφ / 2) ** 2 + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) ** 2;
+const haversineDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+  const R = 6371e3; // Earth radius in meters
+  const rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad;
+  const dLon = (lon2 - lon1) * rad;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  return R * c; // Distance in meters
 };
 
-// Calculate Bearing (ทิศทาง) from two points (prev -> next)
-const getBearing = (from: google.maps.LatLngLiteral, to: google.maps.LatLngLiteral) => {
-    if (!from || !to) return 0;
-    const lat1 = toRad(from.lat);
-    const lat2 = toRad(to.lat);
-    const dLon = toRad(to.lng - from.lng);
-  
-    const y = Math.sin(dLon) * Math.cos(lat2);
-    const x = Math.cos(lat1) * Math.sin(lat2) -
-              Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
-    
-    let brng = toDeg(Math.atan2(y, x));
-    if (isNaN(brng)) return 0;
-    return (brng + 360) % 360;
+const lerpAngle = (a: number, b: number, t: number) => {
+  let diff = b - a;
+  if (diff > 180) diff -= 360;
+  if (diff < -180) diff += 360;
+  return a + diff * t;
 };
 
-const lerp = (start: number, end: number, t: number) => {
-    if (isNaN(start) || isNaN(end)) return end;
-    return start * (1 - t) + end * t;
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+
+const getManeuverIcon = (type: string, modifier: string) => {
+  const className = "w-[44px] h-[44px] text-white";
+  if (modifier?.includes("left")) {
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 18l-6-6 6-6" /><path d="M3 12h10a4 4 0 0 1 4 4v2" />
+      </svg>
+    );
+  }
+  if (modifier?.includes("right")) {
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M15 18l6-6-6-6" /><path d="M21 12H11a4 4 0 0 0-4 4v2" />
+      </svg>
+    );
+  }
+  if (modifier?.includes("uturn") || type === "make a u-turn") {
+    return (
+      <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 14l-4-4 4-4" /><path d="M5 10h11a4 4 0 0 1 0 8h-1" />
+      </svg>
+    );
+  }
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20V4" /><path d="M5 11l7-7 7 7" />
+    </svg>
+  );
 };
 
-// --- Hooks ---
-function useAnimatedPosition(targetPos: google.maps.LatLngLiteral | null) {
-  const [visualPos, setVisualPos] = useState<google.maps.LatLngLiteral | null>(targetPos);
-  const prevPosRef = useRef<google.maps.LatLngLiteral | null>(targetPos);
-  const targetPosRef = useRef<google.maps.LatLngLiteral | null>(targetPos);
-  const startTimeRef = useRef<number>(0);
-  const frameRef = useRef<number>(0);
+export default function NavigationPage() {
+  const router = useRouter();
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+
+  // UI State
+  const [isMapLoaded, setIsMapLoaded] = useState(false);
+  const [isUserPanning, setIsUserPanning] = useState(false);
+  const [instruction, setInstruction] = useState("กำลังค้นหาเส้นทาง...");
+  const [maneuverType, setManeuverType] = useState("straight");
+  const [maneuverModifier, setManeuverModifier] = useState("");
+  const [stepDistance, setStepDistance] = useState("--");
+  const [totalDistance, setTotalDistance] = useState("--");
+  const [durationMin, setDurationMin] = useState("--");
+  const [arrivalTime, setArrivalTime] = useState("--:--");
+  const [speedKmh, setSpeedKmh] = useState(0);
+  const [hasLocation, setHasLocation] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [mapStyle, setMapStyle] = useState("mapbox://styles/mapbox/streets-v12");
+  const [isLayerModalOpen, setIsLayerModalOpen] = useState(false);
+
+  // Voice Refs
+  const isMutedRef = useRef(false);
+  const lastSpokenRef = useRef({ id: "", phase: 99 });
+
+  // Refs
+  const userMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const patientMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const userPosRef = useRef<{ lat: number; lng: number } | null>(null);
+  const patientPosRef = useRef<{ lat: number; lng: number } | null>(null);
+  const headingRef = useRef<number>(0);
+  const smoothHeadingRef = useRef<number>(0);
+  const speedRef = useRef<number>(0);
+
+  const lastRouteFetchUserPosRef = useRef<{ lat: number; lng: number } | null>(null);
+  const lastRouteFetchPatientPosRef = useRef<{ lat: number; lng: number } | null>(null);
+
+  const animFrameRef = useRef<number | null>(null);
+  const panTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
+
+  // Smooth marker animation refs
+  const smoothUserPosRef = useRef<{ lat: number; lng: number } | null>(null);
+  const smoothPatientPosRef = useRef<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
-    if (!targetPos) return;
-    if (!prevPosRef.current) {
-       prevPosRef.current = targetPos;
-       targetPosRef.current = targetPos;
-       setVisualPos(targetPos);
-       return;
-    }
-    prevPosRef.current = visualPos;
-    targetPosRef.current = targetPos;
-    startTimeRef.current = performance.now();
+    isMountedRef.current = true;
+    return () => { isMountedRef.current = false; };
+  }, []);
 
-    const animate = (time: number) => {
-      if (!prevPosRef.current || !targetPosRef.current) return;
-      const elapsed = time - startTimeRef.current;
-      const progress = Math.min(elapsed / POS_ANIMATION_DURATION, 1);
-      const ease = (t: number) => 1 - Math.pow(1 - t, 3); // Cubic ease out
-      const t = ease(progress);
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+  }, [isMuted]);
 
-      const lat = lerp(prevPosRef.current.lat, targetPosRef.current.lat, t);
-      const lng = lerp(prevPosRef.current.lng, targetPosRef.current.lng, t);
+  const speak = useCallback((text: string) => {
+    if (isMutedRef.current || !window.speechSynthesis) return;
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = "th-TH";
+    utter.rate = 1.0;
+    window.speechSynthesis.speak(utter);
+  }, []);
 
-      if (!isNaN(lat) && !isNaN(lng)) {
-          setVisualPos({ lat, lng });
+  // --- Initialize Map ---
+  useEffect(() => {
+    if (map.current || !mapContainer.current) return;
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: mapStyle,
+      center: [100.2654, 16.8398],
+      zoom: 18,
+      pitch: 60,
+      bearing: 0,
+      attributionControl: false,
+    });
+
+    const setupLayers = () => {
+      if (!map.current) return;
+
+      // Route border layer
+      if (!map.current.getSource("route")) {
+        map.current.addSource("route", {
+          type: "geojson",
+          data: { type: "Feature", properties: {}, geometry: { type: "LineString", coordinates: [] } },
+        });
       }
-
-      if (progress < 1) {
-        frameRef.current = requestAnimationFrame(animate);
-      } else {
-        prevPosRef.current = { lat, lng };
+      if (!map.current.getLayer("route-border")) {
+        map.current.addLayer({
+          id: "route-border",
+          type: "line",
+          source: "route",
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": "#1565C0", "line-width": 16 },
+        });
+      }
+      if (!map.current.getLayer("route-fill")) {
+        map.current.addLayer({
+          id: "route-fill",
+          type: "line",
+          source: "route",
+          layout: { "line-join": "round", "line-cap": "round" },
+          paint: { "line-color": "#4285F4", "line-width": 11 },
+        });
+      }
+      // re-apply route if we have one
+      if (lastRouteFetchUserPosRef.current && lastRouteFetchPatientPosRef.current) {
+        fetchRoute(lastRouteFetchUserPosRef.current, lastRouteFetchPatientPosRef.current, true);
       }
     };
 
-    if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    frameRef.current = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(frameRef.current);
-  }, [targetPos]);
+    // Whenever style changes, we need to re-add the route source and layers
+    map.current.on('style.load', setupLayers);
 
-  return visualPos;
-}
+    map.current.on("load", () => {
+      setupLayers();
+      setIsMapLoaded(true);
+    });
 
-const NavigationMode = () => {
-  const router = useRouter();
-  const { isLoaded } = useGoogleMaps();
-  const mapRef = useRef<google.maps.Map | null>(null);
+    map.current.on("dragstart", (e: any) => {
+      if (!e.originalEvent) return;
+      setIsUserPanning(true);
+      if (panTimeoutRef.current) clearTimeout(panTimeoutRef.current);
+    });
 
-  // -- State --
-  const [myPos, setMyPos] = useState<google.maps.LatLngLiteral | null>(null); // Target GPS
-  const [bearing, setBearing] = useState<number>(0); // Logical Bearing
-  const [patientPos, setPatientPos] = useState<google.maps.LatLngLiteral | null>(null);
-  const [mapType, setMapType] = useState('roadmap');
-  const [isMuted, setIsMuted] = useState(false);
-  const [isFollowing, setIsFollowing] = useState(true);
+    map.current.on("dragend", (e: any) => {
+      if (!e.originalEvent) return;
+      panTimeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) setIsUserPanning(false);
+      }, 5000);
+    });
 
-  // -- Visuals --
-  // LERP Position for User
-  const animatedMyPos = useAnimatedPosition(myPos); 
-  // LERP Position for Patient
-  const animatedPatientPos = useAnimatedPosition(patientPos);
+    // จับทุก interaction ที่ user ทำเอง (pinch zoom, scroll, etc.)
+    map.current.on("movestart", (e: any) => {
+      // เช็คว่ามาจาก user จริงๆ ไม่ใช่จาก easeTo ของเรา
+      if (e.originalEvent) {
+        setIsUserPanning(true);
+        if (panTimeoutRef.current) clearTimeout(panTimeoutRef.current);
+      }
+    });
+    map.current.on("moveend", (e: any) => {
+      if (e.originalEvent) {
+        if (panTimeoutRef.current) clearTimeout(panTimeoutRef.current);
+        panTimeoutRef.current = setTimeout(() => {
+          if (isMountedRef.current) setIsUserPanning(false);
+        }, 5000);
+      }
+    });
 
-  // -- Heading Refs --
-  const headingRef = useRef<number>(0);
-  const smoothHeadingRef = useRef<number>(0);
-  const deviceHeadingRef = useRef<number>(0);
-  const speedRef = useRef<number>(0);
+    return () => {
+      isMountedRef.current = false;
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      map.current?.remove();
+      map.current = null;
+    };
+  }, []);
 
-  // DeviceOrientation — เข็มทิศตอนหยุดนิ่ง
+  // --- Apply map style changes ---
+  useEffect(() => {
+    if (!map.current) return;
+    map.current.setStyle(mapStyle);
+  }, [mapStyle]);
+
+  // --- DeviceOrientation ---
   useEffect(() => {
     const handleOrientation = (e: any) => {
       if (speedRef.current < 2) {
+        let newHeading = headingRef.current;
         if (e.webkitCompassHeading !== undefined) {
-          deviceHeadingRef.current = e.webkitCompassHeading;
+          newHeading = e.webkitCompassHeading;
         } else if (e.alpha !== null) {
-          deviceHeadingRef.current = (360 - e.alpha) % 360;
+          newHeading = (360 - e.alpha) % 360;
         }
-        headingRef.current = deviceHeadingRef.current;
+        // Dead zone: ไม่อัปเดตถ้าเปลี่ยนน้อยกว่า 3° กันสั่น
+        let diff = newHeading - headingRef.current;
+        if (diff > 180) diff -= 360;
+        if (diff < -180) diff += 360;
+        if (Math.abs(diff) > 3) {
+          headingRef.current = newHeading;
+        }
       }
     };
     window.addEventListener("deviceorientation", handleOrientation, true);
     return () => window.removeEventListener("deviceorientation", handleOrientation, true);
   }, []);
-  const [routeOrigin, setRouteOrigin] = useState<google.maps.LatLngLiteral | null>(null);
-  const [routeDestination, setRouteDestination] = useState<google.maps.LatLngLiteral | null>(null);
-  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
-  const [routeStats, setRouteStats] = useState<{ duration: string; distance: string } | null>(null);
 
-  // Refs
-  const lastRawPosRef = useRef<google.maps.LatLngLiteral | null>(null);
-  const lastBearingRef = useRef<number>(0);
-  const lastInstructionRef = useRef<string>("");
+  // --- Camera Loop 60fps (smooth marker + camera) ---
+  useEffect(() => {
+    if (!isMapLoaded) return;
 
-  const onLoad = useCallback((mapInstance: google.maps.Map) => {
-    mapRef.current = mapInstance;
+    const tick = () => {
+      if (!map.current) {
+        animFrameRef.current = requestAnimationFrame(tick);
+        return;
+      }
+
+      smoothHeadingRef.current = lerpAngle(smoothHeadingRef.current, headingRef.current, 0.03);
+
+      // Smooth user marker position (ไหลลื่นเหมือนลอยน้ำ)
+      if (userPosRef.current) {
+        if (!smoothUserPosRef.current) {
+          smoothUserPosRef.current = { ...userPosRef.current };
+        } else {
+          smoothUserPosRef.current.lat = lerp(smoothUserPosRef.current.lat, userPosRef.current.lat, 0.015);
+          smoothUserPosRef.current.lng = lerp(smoothUserPosRef.current.lng, userPosRef.current.lng, 0.015);
+        }
+        // อัปเดต marker position ทุก frame
+        userMarkerRef.current?.setLngLat([smoothUserPosRef.current.lng, smoothUserPosRef.current.lat]);
+        userMarkerRef.current?.setRotation(smoothHeadingRef.current);
+      }
+
+      // Smooth patient marker position
+      if (patientPosRef.current) {
+        if (!smoothPatientPosRef.current) {
+          smoothPatientPosRef.current = { ...patientPosRef.current };
+        } else {
+          smoothPatientPosRef.current.lat = lerp(smoothPatientPosRef.current.lat, patientPosRef.current.lat, 0.01);
+          smoothPatientPosRef.current.lng = lerp(smoothPatientPosRef.current.lng, patientPosRef.current.lng, 0.01);
+        }
+        patientMarkerRef.current?.setLngLat([smoothPatientPosRef.current.lng, smoothPatientPosRef.current.lat]);
+      }
+
+      // Camera follow
+      if (!isUserPanning && smoothUserPosRef.current) {
+        const offsetY = Math.round(window.innerHeight * 0.2);
+        map.current.jumpTo({
+          center: [smoothUserPosRef.current.lng, smoothUserPosRef.current.lat],
+          bearing: smoothHeadingRef.current,
+          pitch: 60,
+          zoom: 18,
+          padding: { top: 0, bottom: offsetY, left: 0, right: 0 }
+        });
+      }
+
+      animFrameRef.current = requestAnimationFrame(tick);
+    };
+
+    animFrameRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
+  }, [isMapLoaded, isUserPanning]);
+
+  // --- Fetch Route ---
+  const fetchRoute = useCallback(async (
+    start: { lat: number; lng: number },
+    end: { lat: number; lng: number },
+    force = false
+  ) => {
+    if (!force && lastRouteFetchUserPosRef.current && lastRouteFetchPatientPosRef.current) {
+      const userMoved = haversineDistance(
+        lastRouteFetchUserPosRef.current.lat, lastRouteFetchUserPosRef.current.lng,
+        start.lat, start.lng
+      );
+      const patientMoved = haversineDistance(
+        lastRouteFetchPatientPosRef.current.lat, lastRouteFetchPatientPosRef.current.lng,
+        end.lat, end.lng
+      );
+
+      // ถ้าระยะห่างการขยับของทั้งคู่น้อยกว่า 15 เมตร ให้ใช้เส้นทางเดิม (ประหยัดโควต้า Mapbox API)
+      if (userMoved < 15 && patientMoved < 15) return;
+    }
+
+    try {
+      const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start.lng},${start.lat};${end.lng},${end.lat}?steps=true&geometries=geojson&overview=full&language=th&access_token=${MAPBOX_TOKEN}`;
+      const res = await fetch(url);
+      const json = await res.json();
+      if (!json.routes?.length || !isMountedRef.current) return;
+
+      const route = json.routes[0];
+      const leg = route.legs[0];
+
+      const distKm = route.distance >= 1000
+        ? `${(route.distance / 1000).toFixed(1)} กม.`
+        : `${Math.round(route.distance)} ม.`;
+      const durMin = Math.ceil(route.duration / 60);
+      const arrival = new Date(Date.now() + route.duration * 1000)
+        .toLocaleTimeString("th-TH", { hour: "2-digit", minute: "2-digit" });
+
+      setTotalDistance(distKm);
+      setDurationMin(String(durMin));
+      setArrivalTime(arrival);
+
+      // Step instruction
+      const currentStep = leg?.steps?.[0];
+      const nextStep = leg?.steps?.[1];
+
+      if (currentStep) {
+        const distReal = currentStep.distance;
+        const activeStep = nextStep || currentStep;
+
+        const stepDistText = distReal >= 1000
+          ? `${(distReal / 1000).toFixed(1)} กม.`
+          : `${Math.round(distReal)} ม.`;
+
+        let bannerText = activeStep.maneuver?.instruction || "มุ่งตรงไป";
+        if (nextStep && distReal > 50) {
+          bannerText = `อีก ${stepDistText} ${activeStep.maneuver?.instruction || ""}`;
+        }
+
+        setStepDistance(stepDistText);
+        setInstruction(bannerText);
+        setManeuverType(activeStep.maneuver?.type || "");
+        setManeuverModifier(activeStep.maneuver?.modifier || "");
+
+        // Voice Logic
+        const turnId = activeStep.maneuver?.location?.join(",") || activeStep.maneuver?.instruction || "end";
+
+        if (turnId !== lastSpokenRef.current.id) {
+          lastSpokenRef.current.id = turnId;
+
+          let initialPhase = 4;
+          if (distReal <= 100) initialPhase = 0;
+          else if (distReal <= 500) initialPhase = 1;
+          else if (distReal <= 2000) initialPhase = 2;
+          else initialPhase = 3;
+
+          lastSpokenRef.current.phase = initialPhase;
+
+          const textToSpeak = bannerText.replace("กม.", "กิโลเมตร").replace("ม.", "เมตร");
+          speak(textToSpeak);
+        } else {
+          let phase = lastSpokenRef.current.phase;
+          let shouldSpeak = false;
+          let prefix = "";
+
+          if (distReal <= 100 && phase > 0) {
+            prefix = "";
+            phase = 0;
+            shouldSpeak = true;
+          } else if (distReal <= 500 && phase > 1) {
+            prefix = "อีก 500 เมตร";
+            phase = 1;
+            shouldSpeak = true;
+          } else if (distReal <= 2000 && phase > 2) {
+            prefix = "อีก 2 กิโลเมตร";
+            phase = 2;
+            shouldSpeak = true;
+          }
+
+          if (shouldSpeak) {
+            lastSpokenRef.current.phase = phase;
+            const msg = prefix
+              ? `${prefix} ${activeStep.maneuver?.instruction || ""}`
+              : (activeStep.maneuver?.instruction || "ตรงไป");
+            speak(msg.replace("กม.", "กิโลเมตร").replace("ม.", "เมตร"));
+          }
+        }
+      }
+
+      // Update route geometry
+      if (map.current?.getSource("route")) {
+        (map.current.getSource("route") as mapboxgl.GeoJSONSource).setData({
+          type: "Feature",
+          properties: {},
+          geometry: route.geometry,
+        });
+      }
+
+      // Save positions so we don't fetch again unless moved > 15m
+      lastRouteFetchUserPosRef.current = { ...start };
+      lastRouteFetchPatientPosRef.current = { ...end };
+    } catch (err) {
+      console.error("Route error:", err);
+    }
   }, []);
 
-  // -- 1. GPS LOGIC --
+  // --- GPS Tracking ---
   useEffect(() => {
-    if (!navigator.geolocation) return;
+    if (!isMapLoaded || !navigator.geolocation) return;
+
     const watchId = navigator.geolocation.watchPosition(
       (pos) => {
         const { latitude, longitude, heading, speed } = pos.coords;
-        const newPos = { lat: latitude, lng: longitude };
         const spd = speed ?? 0;
         speedRef.current = spd;
 
-        // ใช้ GPS heading โดยตรงเมื่อเร็วพอ
+        if (isMountedRef.current) {
+          setSpeedKmh(Math.round(spd * 3.6));
+          setHasLocation(true);
+        }
+
+        const newPos = { lat: latitude, lng: longitude };
+
+        // Dead zone: ไม่อัปเดตตำแหน่งถ้าขยับน้อยกว่า 2 เมตร (กัน GPS jitter)
+        // แต่ยังอัปเดต heading, สร้าง marker, และเรียก fetchRoute ได้
+        const posChanged = !userPosRef.current ||
+          haversineDistance(userPosRef.current.lat, userPosRef.current.lng, newPos.lat, newPos.lng) >= 2;
+
+        if (posChanged) {
+          userPosRef.current = newPos;
+        }
+
         if (heading !== null && spd >= 2) {
           headingRef.current = heading;
         }
-        // เมื่อช้า ใช้ bearing คำนวณจาก 2 จุด
-        else if (lastRawPosRef.current) {
-          const dist = getDistance(lastRawPosRef.current, newPos);
-          if (dist > 2.0) {
-            const calculatedBearing = getBearing(lastRawPosRef.current, newPos);
-            if (!isNaN(calculatedBearing)) {
-              headingRef.current = calculatedBearing;
-            }
-          }
+
+        // User marker — สร้างครั้งแรกครั้งเดียว camera loop จะ handle position
+        if (!userMarkerRef.current && map.current) {
+          const wrapper = document.createElement("div");
+          wrapper.style.cssText = `
+            background: white;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            padding: 12px 14px 10px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.35);
+            display: flex; align-items: center; justify-content: center;
+          `;
+          wrapper.innerHTML = `
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="#4285F4">
+              <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/>
+            </svg>
+          `;
+          userMarkerRef.current = new mapboxgl.Marker({
+            element: wrapper,
+            rotationAlignment: "map",
+            pitchAlignment: "map",
+          }).setLngLat([longitude, latitude]).addTo(map.current);
         }
 
-        setBearing(headingRef.current);
-        lastBearingRef.current = headingRef.current;
-        setMyPos(newPos);
-        lastRawPosRef.current = newPos;
-
-        if (!routeOrigin || getDistance(routeOrigin, newPos) > 30) {
-          setRouteOrigin(newPos);
+        if (patientPosRef.current && userPosRef.current) {
+          fetchRoute(userPosRef.current, patientPosRef.current);
         }
       },
       (err) => console.error("GPS Error:", err),
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
     );
+
     return () => navigator.geolocation.clearWatch(watchId);
-  }, [routeOrigin]);
+  }, [isMapLoaded, fetchRoute]);
 
-  // -- 2. CAMERA & MAP CONTROL --
-  useEffect(() => {
-    if (!isFollowing || !mapRef.current || !animatedMyPos || !window.google) return;
+  // --- Poll Patient ---
+  const fetchPatient = useCallback(async () => {
+    try {
+      const { users_id, takecare_id, idlocation, idsafezone } = router.query;
+      if (!users_id || !takecare_id) return;
 
-    // Smooth heading ด้วย lerp ป้องกันกระตุก
-    const lerpAngle = (a: number, b: number, t: number) => {
-      let diff = b - a;
-      if (diff > 180) diff -= 360;
-      if (diff < -180) diff += 360;
-      return a + diff * t;
-    };
+      const url = `/api/location/getLocation?takecare_id=${takecare_id}&users_id=${users_id}&safezone_id=${idsafezone || ""}&location_id=${idlocation || ""}`;
+      const res = await axios.get(url);
 
-    smoothHeadingRef.current = lerpAngle(smoothHeadingRef.current, headingRef.current, 0.1);
-    const currentBearing = isNaN(smoothHeadingRef.current) ? 0 : smoothHeadingRef.current;
+      if (!res.data?.data) return;
 
-    const OFFSET_METERS = 80;
+      const data = res.data.data;
+      if (!data?.locat_latitude || !data?.locat_longitude || !isMountedRef.current) return;
 
-    if (window.google.maps.geometry) {
-      const cameraCenter = window.google.maps.geometry.spherical.computeOffset(
-        animatedMyPos,
-        OFFSET_METERS,
-        currentBearing
-      );
+      const newPos = { lat: Number(data.locat_latitude), lng: Number(data.locat_longitude) };
 
-      if (cameraCenter && isFinite(cameraCenter.lat()) && isFinite(cameraCenter.lng())) {
-        try {
-          mapRef.current.moveCamera({
-            center: cameraCenter,
-            heading: currentBearing,
-            tilt: 45,
-            zoom: 19,
-          });
-        } catch (e) {
-          console.error("Camera Move Error:", e);
-        }
+      if (patientPosRef.current) {
+        const dist = haversineDistance(
+          patientPosRef.current.lat, patientPosRef.current.lng,
+          newPos.lat, newPos.lng
+        );
+        // ขยับไม่ถึง 15 เมตร ให้หมุดเป้าหมายอยู่ที่เดิม จะได้ไม่กระตุกไปมา
+        if (dist < 15) return;
       }
-    }
-  }, [animatedMyPos, isFollowing]);
 
-  const handleMapDrag = () => {
-      // Allow user to pan away
-      setIsFollowing(false);
-  };
+      patientPosRef.current = newPos;
+
+      if (!map.current) return;
+
+      if (!patientMarkerRef.current) {
+        const el = document.createElement("div");
+        el.style.cssText = `
+          width: 40px; height: 40px;
+          background: white;
+          border: 3px solid #e53e3e;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 2px 12px rgba(229,62,62,0.45);
+        `;
+        el.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="#e53e3e"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>`;
+        patientMarkerRef.current = new mapboxgl.Marker({ element: el })
+          .setLngLat([newPos.lng, newPos.lat])
+          .addTo(map.current);
+      } else {
+        patientMarkerRef.current.setLngLat([newPos.lng, newPos.lat]);
+      }
+
+      if (userPosRef.current) {
+        fetchRoute(userPosRef.current, newPos);
+      }
+    } catch (err) {
+      console.error("Patient fetch error:", err);
+    }
+  }, [fetchRoute]);
+
+  useEffect(() => {
+    fetchPatient();
+    const interval = setInterval(fetchPatient, 5000);
+    return () => clearInterval(interval);
+  }, [fetchPatient]);
 
   const handleRecenter = () => {
-     setIsFollowing(true);
-     // Instant snap back
-     if (myPos && mapRef.current) {
-        // Trigger effect will handle the rest, but we can do an initial move
-        // to prevent waiting for next animation frame
-        mapRef.current.moveCamera({ center: myPos, zoom: 19, heading: bearing, tilt: 45 });
-     }
-  };
-
-  // -- Patient Polling --
-  useEffect(() => {
-    const fetch = async () => {
-       const { users_id, takecare_id, idlocation } = router.query;
-       if (!users_id || !takecare_id) return;
-       try {
-           const url = `${process.env.WEB_DOMAIN}/api/location/getLocation?takecare_id=${takecare_id}&users_id=${users_id}&location_id=${idlocation || ''}`;
-           const res = await axios.get(url);
-           if (res.data?.data) {
-                const p = { lat: Number(res.data.data.locat_latitude), lng: Number(res.data.data.locat_longitude) };
-                setPatientPos(p);
-                setRouteDestination(p);
-           }
-       } catch (err) { console.error(err); }
-    };
-    if (router.isReady) fetch();
-    const interval = setInterval(() => { if (router.isReady) fetch(); }, 3000);
-    return () => clearInterval(interval);
-  }, [router.isReady, router.query]);
-
-  // -- Voice & Routing --
-  const speak = (text: string) => {
-     if (isMuted || typeof window === 'undefined') return;
-     window.speechSynthesis.cancel();
-     const utterance = new SpeechSynthesisUtterance(text);
-     utterance.lang = 'th-TH'; 
-     window.speechSynthesis.speak(utterance);
-  };
-
-  useEffect(() => {
-    if (isLoaded && routeOrigin && routeDestination) {
-      const ds = new google.maps.DirectionsService();
-      ds.route({ origin: routeOrigin, destination: routeDestination, travelMode: google.maps.TravelMode.DRIVING }, (res, status) => {
-         if (status === "OK" && res) {
-            setDirections(res);
-            const leg = res.routes[0].legs[0];
-            setRouteStats({
-               distance: leg.distance?.text || "...",
-               duration: leg.duration?.text || "...",
-            });
-            if (leg.steps && leg.steps.length > 0) {
-                const rawInstruction = leg.steps[0].instructions || "";
-                const cleanInstruction = rawInstruction.replace(/<[^>]+>/g, '');
-                if (cleanInstruction !== lastInstructionRef.current) {
-                    lastInstructionRef.current = cleanInstruction;
-                    const distCheck = leg.steps[0].distance?.text || "";
-                    speak(`อีก ${distCheck} ${cleanInstruction}`);
-                }
-            }
-         }
+    // ให้ isUserPanning ค้างไว้ตอนดึงกล้องกลับ จะได้ไม่โดน loop duration 0 ตัดจบแอนิเมชัน
+    setIsUserPanning(true);
+    if (panTimeoutRef.current) clearTimeout(panTimeoutRef.current);
+    if (map.current && userPosRef.current) {
+      const offsetY = Math.round(window.innerHeight * 0.2);
+      map.current.easeTo({
+        center: [userPosRef.current.lng, userPosRef.current.lat],
+        zoom: 18,
+        bearing: smoothHeadingRef.current,
+        pitch: 60,
+        offset: [0, offsetY],
+        duration: 800,
       });
+
+      // กลับมา track รูปลื่น ๆ ต่อหลังจาก 800ms
+      panTimeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) setIsUserPanning(false);
+      }, 800);
     }
-  }, [isLoaded, routeOrigin, routeDestination]);
-
-  const getArrivalTime = () => {
-     if (!routeStats) return "--:--";
-     const match = routeStats.duration.match(/(\d+)/);
-     if (match) {
-        const d = new Date();
-        d.setMinutes(d.getMinutes() + parseInt(match[0]));
-        return d.toLocaleTimeString("th-TH", { hour: "2-digit", minute:"2-digit"});
-     }
-     return "--:--";
-  };
-
-  if (!isLoaded) return <div className="h-[100dvh] bg-black text-white flex center items-center justify-center">Loading...</div>;
-
-  const PATIENT_ICON_FG = {
-      url: "https://cdn-icons-png.flaticon.com/512/684/684908.png", 
-      scaledSize: new google.maps.Size(44, 44),
-      anchor: new google.maps.Point(22, 44)
-  };
-  const PATIENT_ICON_BG = {
-      path: "M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z",
-      fillColor: "white", fillOpacity: 1, strokeColor: "white", strokeWeight: 4, scale: 1.2, anchor: new google.maps.Point(0, 0)
   };
 
   return (
-    <div className="relative w-full h-[100dvh] bg-gray-900 overflow-hidden font-sans">
-      
-      {/* --- Top Header --- */}
-      <div className="absolute top-4 left-4 right-4 md:left-8 md:right-8 z-30 bg-[#0F5338] text-white p-4 rounded-xl shadow-xl flex items-center justify-between min-h-[80px]">
-          <div className="flex items-start gap-3 md:gap-4">
-             <div className="mt-1">
-                <svg className="w-8 h-8 md:w-10 md:h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                </svg>
-             </div>
-             <div>
-                <p className="text-xl md:text-2xl font-bold leading-tight tracking-wide">มุ่งหน้าตามเส้นทาง</p>
-                <p className="text-base md:text-lg text-green-100 font-medium">ระยะทาง {routeStats?.distance || '...'}</p>
-             </div>
+    <div className="relative w-full h-[100dvh] overflow-hidden bg-black select-none font-sans">
+      {/* Map */}
+      <div ref={mapContainer} className="absolute inset-0 w-full h-full" />
+
+      {/* ===== TOP BANNER ===== */}
+      <div className="absolute top-0 left-0 right-0 z-20 px-3 pt-3">
+        <div className="bg-[#0F5338] rounded-2xl shadow-2xl px-4 py-4 flex items-center gap-3 min-h-[88px]">
+          {/* ไอคอน + ระยะทาง */}
+          <div className="shrink-0 flex flex-col items-center gap-1 w-14">
+            {getManeuverIcon(maneuverType, maneuverModifier)}
+            <span className="text-white font-extrabold text-sm leading-none">{stepDistance}</span>
           </div>
+
+          {/* เส้นแบ่ง */}
+          <div className="w-px h-12 bg-white/25 shrink-0" />
+
+          {/* ข้อความนำทาง */}
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-bold text-[22px] leading-tight">
+              {!isMapLoaded ? "กำลังโหลด..." : !hasLocation ? "กำลังหาตำแหน่ง..." : instruction}
+            </p>
+          </div>
+        </div>
       </div>
 
-      <GoogleMap
-        mapContainerStyle={MAP_CONTAINER_STYLE}
-        center={INITIAL_CENTER} 
-        zoom={19}
-        onLoad={onLoad}
-        onDragStart={handleMapDrag} 
-        options={{ 
-            disableDefaultUI: true, 
-            mapTypeId: mapType, 
-            gestureHandling: "greedy",
-        }}
-        // Note: initial tilt/heading handled by moveCamera in effect
-      >
-         {/* User Marker */}
-         {animatedMyPos && (
-            <MarkerF
-               position={animatedMyPos}
-               options={{ optimized: true }}
-               icon={{
-                  path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
-                  scale: 7,
-                  fillColor: "#4285F4",
-                  fillOpacity: 1,
-                  strokeColor: "white",
-                  strokeWeight: 2,
-                  rotation: bearing, // Rotate arrow with bearing
-               }}
-               zIndex={100}
-            />
-         )}
-
-          {/* Patient Marker */}
-          {animatedPatientPos && (
-              <>
-                 <MarkerF position={animatedPatientPos} icon={PATIENT_ICON_BG as any} zIndex={90} options={{optimized:false}} />
-                 <MarkerF position={animatedPatientPos} icon={PATIENT_ICON_FG as any} zIndex={91} options={{optimized:false}} />
-              </>
+      {/* ===== RIGHT BUTTONS ===== */}
+      <div className="absolute right-3 z-20 flex flex-col gap-3" style={{ top: "180px" }}>
+        {/* เข็มทิศ */}
+        <button
+          onClick={() => {
+            setIsUserPanning(true);
+            if (panTimeoutRef.current) clearTimeout(panTimeoutRef.current);
+            if (map.current) {
+              map.current.easeTo({
+                bearing: 0,
+                pitch: 0,
+                duration: 800
+              });
+            }
+            // กลับมา track หลัง animation จบ
+            panTimeoutRef.current = setTimeout(() => {
+              if (isMountedRef.current) setIsUserPanning(false);
+            }, 900);
+          }}
+          className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+        >
+          <svg className="w-7 h-7" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="11" fill="white" stroke="#e5e7eb" strokeWidth="1" />
+            <path d="M12 4L9.5 12h5L12 4Z" fill="#EA4335" />
+            <path d="M12 20L14.5 12h-5L12 20Z" fill="#9ca3af" />
+          </svg>
+        </button>
+        {/* ปุ่มเลเยอร์ */}
+        <button
+          onClick={() => setIsLayerModalOpen(true)}
+          className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+        >
+          <svg className="w-6 h-6 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2" />
+            <polyline points="2 12 12 17 22 12" />
+            <polyline points="2 17 12 22 22 17" />
+          </svg>
+        </button>
+        {/* เสียง */}
+        <button
+          onClick={() => setIsMuted(!isMuted)}
+          className="w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center active:scale-95 transition-transform"
+        >
+          {isMuted ? (
+            <svg className="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="1" y1="1" x2="23" y2="23" />
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+            </svg>
           )}
-
-         {directions && <DirectionsRenderer directions={directions} options={{ suppressMarkers: true, polylineOptions: { strokeColor: "#4285F4", strokeWeight: 10, strokeOpacity: 0.9 }, preserveViewport: true }} />}
-      </GoogleMap>
-
-      {/* --- Controls --- */}
-      <div className="absolute right-4 top-32 md:top-36 flex flex-col gap-3 md:gap-4 z-30">
-          <MapLayerControl mapType={mapType} setMapType={setMapType} />
-          
-           {/* Mute Button */}
-          <div 
-             onClick={() => setIsMuted(!isMuted)}
-             className="w-10 h-10 md:w-12 md:h-12 bg-white rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:bg-gray-50 bg-opacity-90 backdrop-blur"
-          >
-             {isMuted ? (
-                <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />
-                </svg>
-             ) : (
-                <svg className="w-5 h-5 md:w-6 md:h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                </svg>
-             )}
-          </div>
+        </button>
       </div>
 
-      {/* Recenter Button */}
-      {!isFollowing && (
-        <div onClick={handleRecenter} className="absolute bottom-44 md:bottom-40 left-4 z-30 bg-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 cursor-pointer text-blue-600 font-bold text-sm tracking-wide hover:bg-gray-50 transition-colors animate-fade-in-up">
-            <svg className="w-4 h-4 transform rotate-45" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
-            ปรับจุดกลาง
+      {/* ===== LAYER MODAL ===== */}
+      {isLayerModalOpen && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setIsLayerModalOpen(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-[85%] max-w-sm" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-800">ประเภทแผนที่</h3>
+            </div>
+            <div className="flex justify-center gap-8">
+              {/* Default Street Style */}
+              <div className="flex flex-col items-center gap-3 cursor-pointer group" onClick={() => { setMapStyle("mapbox://styles/mapbox/streets-v12"); setIsLayerModalOpen(false); }}>
+                <div className={`w-20 h-20 bg-gray-50 rounded-2xl overflow-hidden border-[3px] transition-colors p-3 flex items-center justify-center ${mapStyle === "mapbox://styles/mapbox/streets-v12" ? "border-[#008296] bg-[#E0F7FA]" : "border-transparent"}`}>
+                  <img src="https://cdn-icons-png.flaticon.com/512/854/854894.png" alt="ค่าเริ่มต้น" className="w-full h-full object-contain drop-shadow-sm opacity-80" />
+                </div>
+                <span className={`text-[15px] font-bold ${mapStyle === "mapbox://styles/mapbox/streets-v12" ? "text-[#008296]" : "text-gray-600"}`}>ค่าเริ่มต้น</span>
+              </div>
+
+              {/* Satellite Style */}
+              <div className="flex flex-col items-center gap-3 cursor-pointer group" onClick={() => { setMapStyle("mapbox://styles/mapbox/satellite-streets-v12"); setIsLayerModalOpen(false); }}>
+                <div className={`w-20 h-20 bg-gray-50 rounded-2xl overflow-hidden border-[3px] transition-colors p-3 flex items-center justify-center ${mapStyle === "mapbox://styles/mapbox/satellite-streets-v12" ? "border-[#008296] bg-[#E0F7FA]" : "border-transparent"}`}>
+                  <img src="https://cdn-icons-png.flaticon.com/512/3233/3233887.png" alt="ดาวเทียม" className="w-full h-full object-contain drop-shadow-sm opacity-80" />
+                </div>
+                <span className={`text-[15px] font-bold ${mapStyle === "mapbox://styles/mapbox/satellite-streets-v12" ? "text-[#008296]" : "text-gray-600"}`}>ดาวเทียม</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
-      {/* --- Bottom Sheet --- */}
-      <div className="absolute bottom-0 left-0 w-full z-30 bg-white rounded-t-3xl shadow-[0_-5px_20px_rgba(0,0,0,0.2)] px-6 py-6 pb-safe md:pb-10 transition-transform duration-300">
-         <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
-         <div className="flex items-center justify-between">
-             <div className="flex flex-col">
-                {routeStats ? (
-                   <>
-                     <span className="text-3xl md:text-4xl font-extrabold text-[#188038] tracking-tight">{routeStats.duration}</span>
-                     <div className="flex items-center gap-2 mt-1 text-gray-500 font-medium text-sm">
-                        <span>{routeStats.distance}</span><span>•</span><span>{getArrivalTime()}</span>
-                     </div>
-                   </>
-                ) : (
-                   <span className="text-2xl font-bold text-gray-400 animate-pulse">Calculating...</span>
-                )}
-             </div>
-             
-             <div className="hidden sm:flex w-12 h-12 bg-gray-100 rounded-full items-center justify-center text-gray-600">
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-             </div>
-             
-             <button onClick={() => router.back()} className="bg-red-600 hover:bg-red-700 text-white text-lg font-bold py-3 px-6 md:px-8 rounded-full shadow-md transition-all active:scale-95">ออก</button>
-         </div>
+
+
+      {/* ===== RECENTER — อยู่เบื้องบน bottom sheet ซ้ายมือ ===== */}
+      {isUserPanning && (
+        <div className="absolute z-20 left-3" style={{ bottom: "148px" }}>
+          <button
+            onClick={handleRecenter}
+            className="bg-[#4285F4] text-white px-4 py-2.5 rounded-full shadow-xl flex items-center gap-2 font-bold text-sm active:scale-95 transition-transform"
+          >
+            <svg className="w-4 h-4 rotate-45" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+            </svg>
+            ปรับจุดกลาง
+          </button>
+        </div>
+      )}
+
+      {/* ===== BOTTOM SHEET ===== */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-white rounded-t-3xl shadow-[0_-4px_20px_rgba(0,0,0,0.15)] pt-3 pb-8 px-6">
+        <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-4" />
+        <div className="flex items-center justify-between gap-3 mt-4">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="text-[34px] font-extrabold text-[#188038] tracking-tight leading-none">{durationMin}</span>
+              <span className="text-[20px] font-bold text-[#188038]">นาที</span>
+              <svg className="w-[18px] h-[18px] text-[#3C4043] ml-0.5 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+              </svg>
+            </div>
+            <p className="text-[#5F6368] text-[15px] font-bold m-0 flex items-center gap-2.5">
+              <span>{totalDistance}</span>
+              <span className="w-1 h-1 rounded-full bg-[#5F6368] inline-block" />
+              <span>{arrivalTime} น.</span>
+            </p>
+          </div>
+          <div className="flex items-center">
+            <Link href="/">
+              <button className="bg-[#EA4335] text-white font-bold text-[17px] h-12 px-8 rounded-full shadow-sm active:scale-95 transition-all outline-none border-none">
+                ออก
+              </button>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
-
-export default NavigationMode;
