@@ -40,7 +40,7 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse) 
             });
 
             if (user && takecareperson) {
-                const message = `มีการกด SOS จากภายในจากผู้มีภาวะพึ่งพิง`;
+                const message = `⚠️ มีการกด SOS จากภายในจากผู้มีภาวะพึ่งพิง`;
                 
                 // ตรวจสอบว่า users_line_id ไม่เป็น null
                 const replyToken = user.users_line_id || '';
